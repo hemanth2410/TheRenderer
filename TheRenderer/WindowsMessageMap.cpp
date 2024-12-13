@@ -2,7 +2,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
-#include <Windows.h>
+#include "ChiliWin.h"
 // secret messages
 #define WM_UAHDESTROYWINDOW 0x0090
 #define WM_UAHDRAWMENU 0x0091
