@@ -52,6 +52,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
 }
 
 Window::Window(int width, int height, const char* name) noexcept
+	: width(width),height(height)
 {
 	RECT wr;
 	wr.left = 100;
@@ -112,6 +113,14 @@ LRESULT WINAPI Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
+void Window::SetTitle(const std::string& title)
+{
+	if (SetWindowText(hWnd, ConvertToWideString(title).c_str()) == 0)
+	{
+		//throw CHWND_LAST_EXCEPT();
+	}
+}
+
 LRESULT CALLBACK Window::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
 	Window* const pWnd = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
@@ -125,20 +134,94 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPARAM) noe
 	case WM_CLOSE:
 		PostQuitMessage(69);
 		return 0;
+	case WM_KILLFOCUS:
+		keyboard.ClearState();
+		break;
+	case WM_SYSKEYDOWN:
+	case WM_KEYDOWN:
+		if (!(lPARAM && 0x40000000) || keyboard.AutorepeatIsEnabled())
+		{
+			keyboard.OnKeyPressed(static_cast<unsigned char>(wParam));
+		}
+		break;
+	case WM_SYSKEYUP:
+	case WM_KEYUP:
+		keyboard.OnKeyReleased(static_cast<unsigned char>(wParam));
+		break;
+	case WM_CHAR:
+		keyboard.OnChar(static_cast<unsigned char>(wParam));
+		break;
+	case WM_MOUSEMOVE:
+	{
+		POINTS pt = MAKEPOINTS(lPARAM);
+		if (pt.x >= 0 && pt.x < width && pt.y >= 0 && pt.y < height)
+		{
+			mouse.OnMouseMove(pt.x, pt.y);
+			if (!mouse.IsInWindow())
+			{
+				SetCapture(hWnd);
+				mouse.OnMouseEnter();
+			}
+		}
+		else 
+		{
+			if (wParam & (MK_LBUTTON | MK_RBUTTON))
+			{
+				mouse.OnMouseMove(pt.x, pt.y);
+			}
+			else
+			{
+				ReleaseCapture();
+				mouse.OnMouseLeave();
+			}
+		}
+	}
+	break;
+	case WM_LBUTTONDOWN:
+	{
+		POINTS pt = MAKEPOINTS(lPARAM);
+		mouse.OnLeftPressed(pt.x, pt.y);
+	}
+	break;
+	case WM_RBUTTONDOWN:
+	{
+		POINTS pt = MAKEPOINTS(lPARAM);
+		mouse.OnRightPressed(pt.x, pt.y);
+	}
+	break;
+	case WM_LBUTTONUP:
+	{
+		POINTS pt = MAKEPOINTS(lPARAM);
+		mouse.OnLeftReleased(pt.x, pt.y);
+	}
+	break;
+	case WM_RBUTTONUP:
+	{
+		POINTS pt = MAKEPOINTS(lPARAM);
+		mouse.OnRightReleased(pt.x, pt.y);
+	}
+	break;
+	case WM_MOUSEWHEEL:
+	{
+		POINTS pt = MAKEPOINTS(lPARAM);
+		const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+		mouse.OnWheelDelta(pt.x, pt.y, delta);
+	}
+	break;
 	}
 	return DefWindowProc(hWnd, msg, wParam, lPARAM);
 }
 
-Window::Exception::Exception(int line, const char * file, HRESULT hr) noexcept 
+Window::Exception::Exception(int line, const char* file, HRESULT hr) noexcept
 	:
-	ChiliException(line,file),hr(hr)
+	ChiliException(line, file), hr(hr)
 {}
 
-const char * Window::Exception::what() const noexcept {
+const char* Window::Exception::what() const noexcept {
 	std::ostringstream oss;
 	oss << GetType() << std::endl
 		<< "[Error code]" << GerErrorCode() << std::endl
-		<< "[Description]"<< GetErrorString() << std::endl
+		<< "[Description]" << GetErrorString() << std::endl
 		<< GetOriginString();
 	whatBuffer == oss.str();
 	return whatBuffer.c_str();
@@ -153,11 +236,11 @@ std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
 {
 	char* pMsgBuf = nullptr;
 	DWORD nMsgLen = FormatMessageA(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER|
-		FORMAT_MESSAGE_FROM_SYSTEM|
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
 		FORMAT_MESSAGE_IGNORE_INSERTS,
-		nullptr,hr,MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),
-		reinterpret_cast<LPSTR>(&pMsgBuf),0,nullptr
+		nullptr, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr
 	);
 	if (nMsgLen == 0)
 	{

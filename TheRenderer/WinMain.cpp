@@ -1,6 +1,6 @@
 #include "Window.h"
 #include <string>
-
+#include <sstream>
 std::wstring ConvertToWideString(const char* str) {
 	return std::wstring(str, str + strlen(str));
 }
@@ -19,6 +19,21 @@ int CALLBACK WinMain(
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg); // Automatically picks the correct version
+			if (wnd.keyboard.KeyIsPressed(VK_SPACE))
+			{
+				MessageBox(nullptr, L"Something happon!", L"Space key was pressed", MB_OK | MB_ICONEXCLAMATION);
+			}
+			while (!wnd.mouse.IsEmpty())
+			{
+				const auto e = wnd.mouse.Read();
+				if(e.value().GetType() == Mouse::Event::Type::Move)
+				{
+					std::ostringstream oss;
+					oss << "Mouse Position : (" << e.value().GetPosX() << ";" << e.value().GetPosY() << ")";
+					wnd.SetTitle(oss.str());
+
+				}
+			}
 		}
 		if (gResult == -1)
 		{
