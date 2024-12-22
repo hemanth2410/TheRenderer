@@ -5,6 +5,7 @@
 #include "ChiliException.h"
 #include <sstream>
 #include "resource.h"
+#include <optional>
 std::wstring ConvertToWideString(const std::string& str) {
 	size_t len = str.length() + 1; // length including null-terminator
 	std::wstring wstr(len, L'\0'); // Initialize a wide string with enough space
@@ -257,4 +258,19 @@ HRESULT Window::Exception::GerErrorCode() const noexcept
 
 std::string Window::Exception::GetErrorString() const noexcept {
 	return TranslateErrorCode(hr);
+}
+
+std::optional<int> Window::ProcessMessages()
+{
+	MSG msg;
+	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+	{
+		if (msg.message == WM_QUIT)
+		{
+			return msg.wParam;
+		}
+		TranslateMessage(&msg);
+		DispatchMessageW(&msg);
+	}
+	return {};
 }
