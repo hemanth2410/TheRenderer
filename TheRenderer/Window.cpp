@@ -86,6 +86,8 @@ Window::Window(int width, int height, const char* name) noexcept
 	else
 	{
 		ShowWindow(hWnd, SW_SHOWDEFAULT);
+		// Create graphics object
+		pGfx = std::make_unique<Graphics>(hWnd);
 		UpdateWindow(hWnd); // Ensures the window is redrawn
 	}
 }
@@ -120,6 +122,11 @@ void Window::SetTitle(const std::string& title)
 	{
 		//throw CHWND_LAST_EXCEPT();
 	}
+}
+
+Graphics& Window::Gfx()
+{
+	return *pGfx;
 }
 
 LRESULT CALLBACK Window::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
