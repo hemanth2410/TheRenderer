@@ -137,6 +137,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\Downloads\dxerr.cpp" />
     <ClCompile Include="App.cpp" />
     <ClCompile Include="ChiliException.cpp" />
     <ClCompile Include="Graphics.cpp" />
@@ -148,6 +149,7 @@
     <ClCompile Include="WinMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\Downloads\dxerr.h" />
     <ClInclude Include="App.h" />
     <ClInclude Include="ChiliException.h" />
     <ClInclude Include="Graphics.h" />
@@ -164,6 +166,11 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\Downloads\nuclear_14752.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\Downloads\DXGetErrorDescription.inl" />
+    <None Include="..\..\..\..\Downloads\DXGetErrorString.inl" />
+    <None Include="..\..\..\..\Downloads\DXTrace.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
