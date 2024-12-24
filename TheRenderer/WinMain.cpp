@@ -1,10 +1,7 @@
 #include "App.h"
 #include <string>
 #include <sstream>
-
-std::wstring ConvertToWideString(const char* str) {
-	return std::wstring(str, str + strlen(str));
-}
+#include "StringConversion.h"
 
 int CALLBACK WinMain(
 	HINSTANCE hInstance,

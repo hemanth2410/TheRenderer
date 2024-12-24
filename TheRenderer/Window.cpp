@@ -6,18 +6,7 @@
 #include <sstream>
 #include "resource.h"
 #include <optional>
-std::wstring ConvertToWideString(const std::string& str) {
-	size_t len = str.length() + 1; // length including null-terminator
-	std::wstring wstr(len, L'\0'); // Initialize a wide string with enough space
-	size_t convertedChars = 0; // To store the number of characters converted
-
-	// Use mbstowcs_s for safe conversion
-	mbstowcs_s(&convertedChars, &wstr[0], len, str.c_str(), len);
-
-	// Resize the string to fit the actual converted characters (minus null-terminator)
-	wstr.resize(convertedChars - 1);
-	return wstr;
-}
+#include "StringConversion.h"
 
 Window::WindowClass Window::WindowClass::wndClass;
 Window::WindowClass::WindowClass() noexcept :hInst(GetModuleHandle(nullptr))
@@ -52,7 +41,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
 	return wndClass.hInst;
 }
 
-Window::Window(int width, int height, const char* name) noexcept
+Window::Window(int width, int height, const char* name)
 	: width(width),height(height)
 {
 	RECT wr;
@@ -126,6 +115,10 @@ void Window::SetTitle(const std::string& title)
 
 Graphics& Window::Gfx()
 {
+	if (!pGfx)
+	{
+		throw CHWND_NOGFX_EXCEPT();
+	}
 	return *pGfx;
 }
 
@@ -220,30 +213,10 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPARAM) noe
 	return DefWindowProc(hWnd, msg, wParam, lPARAM);
 }
 
-Window::Exception::Exception(int line, const char* file, HRESULT hr) noexcept
-	:
-	ChiliException(line, file), hr(hr)
-{}
-
-const char* Window::Exception::what() const noexcept {
-	std::ostringstream oss;
-	oss << GetType() << std::endl
-		<< "[Error code]" << GerErrorCode() << std::endl
-		<< "[Description]" << GetErrorString() << std::endl
-		<< GetOriginString();
-	whatBuffer == oss.str();
-	return whatBuffer.c_str();
-}
-
-const char* Window::Exception::GetType() const noexcept
-{
-	return "Custom Window Exception";
-}
-
 std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
 {
 	char* pMsgBuf = nullptr;
-	DWORD nMsgLen = FormatMessageA(
+	const DWORD nMsgLen = FormatMessageA(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER |
 		FORMAT_MESSAGE_FROM_SYSTEM |
 		FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -258,16 +231,8 @@ std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
 	LocalFree(pMsgBuf);
 	return errorString;
 }
-HRESULT Window::Exception::GerErrorCode() const noexcept
-{
-	return hr;
-}
 
-std::string Window::Exception::GetErrorString() const noexcept {
-	return TranslateErrorCode(hr);
-}
-
-std::optional<int> Window::ProcessMessages()
+std::optional<int> Window::ProcessMessages() noexcept
 {
 	MSG msg;
 	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
@@ -280,4 +245,42 @@ std::optional<int> Window::ProcessMessages()
 		DispatchMessageW(&msg);
 	}
 	return {};
+}
+
+Window::HrException::HrException(int line, const char* file, HRESULT hr) noexcept
+	:
+	Exception(line, file),
+	hr(hr)
+{}
+
+const char* Window::HrException::what() const noexcept
+{
+	std::ostringstream oss;
+	oss << GetType() << std::endl
+		<< "[Error Code] 0x" << std::hex << std::uppercase << GetErrorCode()
+		<< std::dec << " (" << (unsigned long)GetErrorCode() << ")" << std::endl
+		<< "[Description] " << GetErrorDescription() << std::endl
+		<< GetOriginString();
+	whatBuffer = oss.str();
+	return whatBuffer.c_str();
+}
+
+const char* Window::HrException::GetType() const noexcept
+{
+	return "Chili Window Exception";
+}
+
+HRESULT Window::HrException::GetErrorCode() const noexcept
+{
+	return hr;
+}
+std::string Window::HrException::GetErrorDescription() const noexcept
+{
+	return Exception::TranslateErrorCode(hr);
+}
+
+
+const char* Window::NoGfxException::GetType() const noexcept
+{
+	return "Chili Window Exception [No Graphics]";
 }
