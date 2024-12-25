@@ -2,6 +2,7 @@
 #include "dxerr.h"
 #include <sstream>
 #include "StringConversion.h"
+namespace wrl = Microsoft::WRL;
 #pragma comment(lib,"d3d11.lib")
 
 #define GFX_EXCEPT_NOINFO(hr) Graphics::HrException( __LINE__,__FILE__,(hr) )
@@ -57,34 +58,16 @@ Graphics::Graphics(HWND hWnd)
 		nullptr,
 		&pContext
 	));
-	ID3D11Resource* pBackBuffer = nullptr;
-	pSwap->GetBuffer(0, __uuidof(ID3D11Resource), reinterpret_cast<void**>(&pBackBuffer));
-	pDevice->CreateRenderTargetView(pBackBuffer, nullptr, &pTarget);
-	GFX_THROW_INFO(pSwap->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&pBackBuffer)));
-	GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer, nullptr, &pTarget));
-	pBackBuffer->Release();
+	wrl::ComPtr<ID3D11Resource> pBackBuffer;
+	GFX_THROW_INFO(pSwap->GetBuffer(0, __uuidof(ID3D11Texture2D),&pBackBuffer));
+	GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer.Get(), nullptr, &pTarget));
+	//pBackBuffer->Release();
 }
-
-Graphics::~Graphics()
+void Graphics::ClearBuffer(float red, float green, float blue)
 {
-	if (pTarget != nullptr)
-	{
-		pTarget->Release();
-	}
-	if (pDevice != nullptr)
-	{
-		pDevice->Release();
-	}
-	if (pSwap != nullptr)
-	{
-		pSwap->Release();
-	}
-	if (pContext != nullptr)
-	{
-		pContext->Release();
-	}
+	const float color[] = { red,green,blue,1.0f };
+	pContext->ClearRenderTargetView(pTarget.Get(), color);
 }
-
 void Graphics::EndFrame()
 {
 	HRESULT hr;

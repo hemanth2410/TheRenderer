@@ -22,6 +22,6 @@ void App::DoFrame()
 	oss << "Time elapsed : " << std::setprecision(1) << std::fixed << t << "sec";
 	wnd.SetTitle(oss.str());*/
 	const float c = sin(timer.Peek()) / 2.0f + 0.5f;
-	wnd.Gfx().ClearBufffer(c, c, 1.0f);
+	wnd.Gfx().ClearBuffer(c, c, 1.0f);
 	wnd.Gfx().EndFrame();
 }
