@@ -3,7 +3,9 @@
 #include <sstream>
 #include "StringConversion.h"
 #include <d3dcompiler.h>
+#include <DirectXMath.h>
 namespace wrl = Microsoft::WRL;
+namespace dx = DirectX;
 #pragma comment(lib,"d3d11.lib")
 #pragma comment(lib,"D3DCompiler.lib")
 
@@ -72,7 +74,7 @@ void Graphics::ClearBuffer(float red, float green, float blue)
 	const float color[] = { red,green,blue,1.0f };
 	pContext->ClearRenderTargetView(pTarget.Get(), color);
 }
-void Graphics::DrawTestTriangle()
+void Graphics::DrawTestTriangle(float angle, float x, float y)
 {
 	namespace wrl = Microsoft::WRL;
 	HRESULT hr;
@@ -135,6 +137,33 @@ void Graphics::DrawTestTriangle()
 	pContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 
 	wrl::ComPtr<ID3DBlob> pBlob;
+
+	struct ConstantBuffer {
+		dx::XMMATRIX transform;
+	};
+
+	const ConstantBuffer cb =
+	{
+		{
+			dx::XMMatrixTranspose(
+			dx::XMMatrixRotationZ(angle) *
+			dx::XMMatrixScaling(3.0f/4.0f, 1.0f,1.0f)*
+			dx::XMMatrixTranslation(x ,y,0.0f))
+		}
+	};
+	wrl::ComPtr<ID3D11Buffer> pConstantBuffer;
+	D3D11_BUFFER_DESC cbd;
+	cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbd.Usage = D3D11_USAGE_DYNAMIC;
+	cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cbd.MiscFlags = 0u;
+	cbd.ByteWidth = sizeof(cb);
+	cbd.StructureByteStride = 0u;
+	D3D11_SUBRESOURCE_DATA csd = {};
+	csd.pSysMem = &cb;
+	GFX_THROW_INFO(pDevice->CreateBuffer(&cbd, &csd, &pConstantBuffer));
+
+	pContext->VSSetConstantBuffers(0u, 1u, pConstantBuffer.GetAddressOf());
 
 	wrl::ComPtr<ID3D11PixelShader> pPixelShader;
 	GFX_THROW_INFO(D3DReadFileToBlob(L"PixelShader.cso", &pBlob));
