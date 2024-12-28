@@ -3,6 +3,7 @@
 #include "GraphicsThrowMacros.h"
 #include "Cube.h"
 
+
 Box::Box(Graphics& gfx,
 	std::mt19937& rng,
 	std::uniform_real_distribution<float>& adist,
@@ -23,14 +24,15 @@ Box::Box(Graphics& gfx,
 	phi(adist(rng))
 {
 	namespace dx = DirectX;
+
 	if (!IsStaticInitialized())
 	{
 		struct Vertex
 		{
 			dx::XMFLOAT3 pos;
 		};
-		auto model = Cube::Make<Vertex>();
-		model.Transform(dx::XMMatrixScaling(1.0f, 1.0f, 1.0f));
+		const auto model = Cube::Make<Vertex>();
+
 		AddStaticBind(std::make_unique<VertexBuffer>(gfx, model.vertices));
 
 		auto pvs = std::make_unique<VertexShader>(gfx, L"ColorIndexVS.cso");
@@ -38,7 +40,9 @@ Box::Box(Graphics& gfx,
 		AddStaticBind(std::move(pvs));
 
 		AddStaticBind(std::make_unique<PixelShader>(gfx, L"ColorIndexPS.cso"));
+
 		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, model.indices));
+
 		struct PixelShaderConstants
 		{
 			struct
@@ -79,6 +83,7 @@ Box::Box(Graphics& gfx,
 
 	AddBind(std::make_unique<TransformCbuf>(gfx, *this));
 
+	// model deformation transform (per instance, not stored as bind)
 	dx::XMStoreFloat3x3(
 		&mt,
 		dx::XMMatrixScaling(1.0f, 1.0f, bdist(rng))

@@ -57,36 +57,36 @@ App::App()
 	Factory f(wnd.Gfx());
 	drawables.reserve(nDrawables);
 	std::generate_n(std::back_inserter(drawables), nDrawables, f);
+
 	wnd.Gfx().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
 }
 
-int App::Go()
-{
-	while (true)
-	{
-		if (const auto ecode = Window::ProcessMessages())
-		{
-			return *ecode;
-		}
-		DoFrame();
-	}
-}
-App::~App() {}
 void App::DoFrame()
 {
-	auto dt = timer.Mark();
-	float startTime = timer.Peek();
-	wnd.Gfx().ClearBuffer(0.0f, 0.0f, 0.0f);
+	const auto dt = timer.Mark();
+	wnd.Gfx().ClearBuffer(0.07f, 0.0f, 0.12f);
 	for (auto& d : drawables)
 	{
 		d->Update(dt);
 		d->Draw(wnd.Gfx());
 	}
 	wnd.Gfx().EndFrame();
-	float endTime = timer.Peek();
-	float delta = endTime - startTime;
-	std::ostringstream ss;
-	ss << (1.0f/delta);
-	std::string s(ss.str());
-	wnd.SetTitle(ss.str());
+}
+
+App::~App()
+{}
+
+
+int App::Go()
+{
+	while (true)
+	{
+		// process all messages pending, but to not block for new messages
+		if (const auto ecode = Window::ProcessMessages())
+		{
+			// if return optional has value, means we're quitting so return exit code
+			return *ecode;
+		}
+		DoFrame();
+	}
 }

@@ -1,11 +1,15 @@
+#ifndef LSTR_FMT_SPEC
+#define LSTR_FMT_SPEC "%S"  // For wide string, use "%S" for wchar_t
+#endif
+
 DX_CHAR strBufferLine[128];
 DX_CHAR strBufferError[256];
 DX_CHAR strBuffer[BUFFER_SIZE];
 
-DX_SPRINTF_S(strBufferLine, 128, DX_STR_WRAP("%lu"), dwLine);
+DX_SPRINTF_S(strBufferLine, 128, DX_STR_WRAP("%lu"), dwLine); // Adding L here didnt help
 if (strFile)
 {
-    DX_SPRINTF_S(strBuffer, BUFFER_SIZE, DX_STR_WRAP(STR_FMT_SPEC "(" STR_FMT_SPEC "): "), strFile, strBufferLine);
+    DX_SPRINTF_S(strBuffer, BUFFER_SIZE, DX_STR_WRAP("Unknown Error"), strFile, strBufferLine);
     DX_OUTPUTDEBUGSTRING(strBuffer);
 }
 
@@ -16,7 +20,7 @@ if (nMsgLen > 0)
     DX_OUTPUTDEBUGSTRING(DX_STR_WRAP(" "));
 }
 
-DX_SPRINTF_S(strBufferError, 256, DX_STR_WRAP(STR_FMT_SPEC " (0x%0.8x)"), DX_GETERRORSTRING(hr), hr);
+DX_SPRINTF_S(strBufferError, 256, DX_STR_WRAP("Unknown error"), DX_GETERRORSTRING(hr), hr);
 DX_SPRINTF_S(strBuffer, BUFFER_SIZE, DX_STR_WRAP("hr=" STR_FMT_SPEC), strBufferError);
 DX_OUTPUTDEBUGSTRING(strBuffer);
 

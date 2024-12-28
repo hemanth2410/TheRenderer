@@ -5,7 +5,7 @@ switch (hr)
     // -------------------------------------------------------------
     // Common Win32 error codes
     // -------------------------------------------------------------
-    CHK_ERRA(S_OK)
+        CHK_ERRA(S_OK)
         CHK_ERRA(S_FALSE)
 
         CHK_ERRA(E_UNEXPECTED)
@@ -3327,5 +3327,4 @@ CHK_ERRA(XAUDIO2_E_DEVICE_INVALIDATED)
 // -------------------------------------------------------------
 CHK_ERRA(XAPO_E_FORMAT_UNSUPPORTED)
 }
-
 return DX_STR_WRAP("Unknown");

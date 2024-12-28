@@ -66,9 +66,6 @@
     <ClCompile Include="Graphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dxerr.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="DxgiInfoManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -114,6 +111,9 @@
     <ClCompile Include="Pyramid.cpp">
       <Filter>Source Files\Drawables</Filter>
     </ClCompile>
+    <ClCompile Include="dxerr.cpp">
+      <Filter>DxErr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WindowsMessageMap.h">
@@ -144,9 +144,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Graphics.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dxerr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DxgiInfoManager.h">
@@ -223,6 +220,9 @@
     </ClInclude>
     <ClInclude Include="Pyramid.h">
       <Filter>Header Files\Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="dxerr.h">
+      <Filter>DxErr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

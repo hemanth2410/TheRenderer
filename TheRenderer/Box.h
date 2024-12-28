@@ -28,6 +28,6 @@ private:
 	float dtheta;
 	float dphi;
 	float dchi;
-
+	// model transform
 	DirectX::XMFLOAT3X3 mt;
 };

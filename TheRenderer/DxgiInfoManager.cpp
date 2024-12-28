@@ -6,7 +6,7 @@
 #include "StringConversion.h"
 #include "GraphicsThrowMacros.h"
 #include "WindowsThrowMacros.h"
-namespace wrl = Microsoft::WRL;
+
 #pragma comment(lib, "dxguid.lib")
 
 

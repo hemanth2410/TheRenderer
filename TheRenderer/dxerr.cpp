@@ -33,6 +33,11 @@
 #include <dwrite.h>
 #endif
 
+#include <string>
+#include <cwchar>
+#include "StringConversion.h"
+//#define DX_ERROR_STRING(hrchk) L"" #hrchk
+
 #define XAUDIO2_E_INVALID_CALL          0x88960001
 #define XAUDIO2_E_XMA_DECODER_ERROR     0x88960002
 #define XAUDIO2_E_XAPO_CREATION_FAILED  0x88960003
@@ -63,7 +68,7 @@
 
 #define  CHK_ERRA_W(hrchk) \
         case hrchk: \
-             return L#hrchk;
+             return L""#hrchk;
 
 #define  CHK_ERR_A(hrchk, strOut) \
         case hrchk: \
@@ -78,7 +83,7 @@
 #define  CHK_ERR_WIN32A_W(hrchk) \
         case HRESULT_FROM_WIN32b(hrchk): \
         case hrchk: \
-             return L#hrchk;
+             return L""#hrchk;
 
 #define  CHK_ERR_WIN32_ONLY_W(hrchk, strOut) \
         case HRESULT_FROM_WIN32b(hrchk): \
@@ -94,7 +99,7 @@
              return strOut;
 
 //-----------------------------------------------------
-const WCHAR* WINAPI DXGetErrorStringW( _In_ HRESULT hr )
+const WCHAR* WINAPI DXGetErrorStringW(_In_ HRESULT hr)
 {
 #define CHK_ERRA CHK_ERRA_W
 #define CHK_ERR CHK_ERR_W
@@ -109,7 +114,7 @@ const WCHAR* WINAPI DXGetErrorStringW( _In_ HRESULT hr )
 #undef CHK_ERR
 }
 
-const CHAR* WINAPI DXGetErrorStringA( _In_ HRESULT hr )
+const CHAR* WINAPI DXGetErrorStringA(_In_ HRESULT hr)
 {
 #define CHK_ERRA CHK_ERRA_A
 #define CHK_ERR CHK_ERR_A
@@ -137,7 +142,7 @@ const CHAR* WINAPI DXGetErrorStringA( _In_ HRESULT hr )
 
 #define  CHK_ERRA_W(hrchk) \
         case hrchk: \
-             wcscpy_s( desc, count, L#hrchk ); \
+             wcscpy_s( desc, count, L""#hrchk ); \
 			 break;
 #define  CHK_ERR_W(hrchk, strOut) \
         case hrchk: \
@@ -154,7 +159,7 @@ const CHAR* WINAPI DXGetErrorStringA( _In_ HRESULT hr )
 			 break;
 
 //--------------------------------------------------------------------------------------
-void WINAPI DXGetErrorDescriptionW( _In_ HRESULT hr, _Out_cap_(count) WCHAR* desc, _In_ size_t count )
+void WINAPI DXGetErrorDescriptionW(_In_ HRESULT hr, _Out_cap_(count) WCHAR* desc, _In_ size_t count)
 {
 #define CHK_ERRA CHK_ERRA_W
 #define CHK_ERR CHK_ERR_W
@@ -165,7 +170,7 @@ void WINAPI DXGetErrorDescriptionW( _In_ HRESULT hr, _Out_cap_(count) WCHAR* des
 #undef CHK_ERR
 }
 
-void WINAPI DXGetErrorDescriptionA( _In_ HRESULT hr, _Out_cap_(count) CHAR* desc, _In_ size_t count )
+void WINAPI DXGetErrorDescriptionA(_In_ HRESULT hr, _Out_cap_(count) CHAR* desc, _In_ size_t count)
 {
 #define CHK_ERRA CHK_ERRA_A
 #define CHK_ERR CHK_ERR_A
@@ -177,8 +182,8 @@ void WINAPI DXGetErrorDescriptionA( _In_ HRESULT hr, _Out_cap_(count) CHAR* desc
 }
 
 //-----------------------------------------------------------------------------
-HRESULT WINAPI DXTraceW( _In_z_ const WCHAR* strFile, _In_ DWORD dwLine, _In_ HRESULT hr,
-                         _In_opt_ const WCHAR* strMsg, _In_ bool bPopMsgBox )
+HRESULT WINAPI DXTraceW(_In_z_ const WCHAR* strFile, _In_ DWORD dwLine, _In_ HRESULT hr,
+    _In_opt_ const WCHAR* strMsg, _In_ bool bPopMsgBox)
 {
 #define DX_STR_WRAP(...) L##__VA_ARGS__
 #define DX_CHAR WCHAR
@@ -201,8 +206,8 @@ HRESULT WINAPI DXTraceW( _In_z_ const WCHAR* strFile, _In_ DWORD dwLine, _In_ HR
 #undef DX_GETERRORSTRING
 }
 
-HRESULT WINAPI DXTraceA( _In_z_ const CHAR* strFile, _In_ DWORD dwLine, _In_ HRESULT hr,
-                         _In_opt_ const CHAR* strMsg, _In_ bool bPopMsgBox )
+HRESULT WINAPI DXTraceA(_In_z_ const CHAR* strFile, _In_ DWORD dwLine, _In_ HRESULT hr,
+    _In_opt_ const CHAR* strMsg, _In_ bool bPopMsgBox)
 {
 #define DX_STR_WRAP(s) s
 #define DX_CHAR CHAR

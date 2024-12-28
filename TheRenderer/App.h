@@ -6,6 +6,7 @@ class App
 {
 public:
 	App();
+	// master frame / message loop
 	int Go();
 	~App();
 private:

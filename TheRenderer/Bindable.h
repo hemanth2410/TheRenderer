@@ -1,7 +1,8 @@
 #pragma once
 #include "Graphics.h"
 
-class Bindable {
+class Bindable
+{
 public:
 	virtual void Bind(Graphics& gfx) noexcept = 0;
 	virtual ~Bindable() = default;

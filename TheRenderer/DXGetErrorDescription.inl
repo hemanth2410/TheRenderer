@@ -21,7 +21,7 @@ switch (hr)
 // -------------------------------------------------------------
 // ddraw.h error codes
 // -------------------------------------------------------------
-    CHK_ERR(DDERR_ALREADYINITIALIZED, "This object is already initialized")
+        CHK_ERR(DDERR_ALREADYINITIALIZED, "This object is already initialized")
         CHK_ERR(DDERR_CANNOTATTACHSURFACE, "This surface can not be attached to the requested surface.")
         CHK_ERR(DDERR_CANNOTDETACHSURFACE, "This surface can not be detached from the requested surface.")
         CHK_ERR(DDERR_CURRENTLYNOTAVAIL, "Support is currently not available.")
