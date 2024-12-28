@@ -7,7 +7,7 @@
 #include "resource.h"
 #include <optional>
 #include "StringConversion.h"
-
+#include "WindowsThrowMacros.h"
 Window::WindowClass Window::WindowClass::wndClass;
 Window::WindowClass::WindowClass() noexcept :hInst(GetModuleHandle(nullptr))
 {

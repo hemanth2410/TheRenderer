@@ -4,10 +4,15 @@
 #include <d3d11.h>
 #include <vector>
 #include "DxgiInfoManager.h"
+#include <d3dcompiler.h>
+#include <DirectXMath.h>
+#include <memory>
+#include <random>
 #include <wrl.h>
 #include <string>
 class Graphics
 {
+	friend class Bindable;
 public:
 	class Exception : public ChiliException
 	{
@@ -46,14 +51,17 @@ public:
 		std::string reason;
 	};
 public:
-	Graphics( HWND hWnd );
+	Graphics(HWND hWnd);
 	Graphics(const Graphics&) = delete;
-	Graphics& operator = (const Graphics&) = delete;
+	Graphics& operator=(const Graphics&) = delete;
 	~Graphics() = default;
 	void EndFrame();
-	void ClearBuffer(float red, float green, float blue);
-	void DrawTestTriangle(float angle, float x, float y,float z);
+	void ClearBuffer(float red, float green, float blue) noexcept;
+	void DrawIndexed(UINT count) noexcept(!IS_DEBUG);
+	void SetProjection(DirectX::FXMMATRIX proj) noexcept;
+	DirectX::XMMATRIX GetProjection() const noexcept;
 private:
+	DirectX::XMMATRIX projection;
 #ifndef NDEBUG
 	DxgiInfoManager infoManager;
 #endif

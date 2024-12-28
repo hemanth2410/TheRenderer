@@ -4,10 +4,11 @@
 #include <dxgidebug.h>
 #include <memory>
 #include "StringConversion.h"
+#include "GraphicsThrowMacros.h"
+#include "WindowsThrowMacros.h"
 namespace wrl = Microsoft::WRL;
 #pragma comment(lib, "dxguid.lib")
 
-#define GFX_THROW_NOINFO(hrcall) if( FAILED( hr = (hrcall) ) ) throw Graphics::HrException( __LINE__,__FILE__,hr )
 
 DxgiInfoManager::DxgiInfoManager()
 {
