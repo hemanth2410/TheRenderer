@@ -138,6 +138,7 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPARAM) noe
 	{
 		return true;
 	}
+	const auto imio = ImGui::GetIO();
 	switch (msg)
 	{
 	case WM_CLOSE:
@@ -148,6 +149,10 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPARAM) noe
 		break;
 	case WM_SYSKEYDOWN:
 	case WM_KEYDOWN:
+		if (imio.WantCaptureKeyboard)
+		{
+			break;
+		}
 		if (!(lPARAM && 0x40000000) || keyboard.AutorepeatIsEnabled())
 		{
 			keyboard.OnKeyPressed(static_cast<unsigned char>(wParam));
@@ -155,13 +160,25 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPARAM) noe
 		break;
 	case WM_SYSKEYUP:
 	case WM_KEYUP:
+		if (imio.WantCaptureKeyboard)
+		{
+			break;
+		}
 		keyboard.OnKeyReleased(static_cast<unsigned char>(wParam));
 		break;
 	case WM_CHAR:
+		if (imio.WantCaptureKeyboard)
+		{
+			break;
+		}
 		keyboard.OnChar(static_cast<unsigned char>(wParam));
 		break;
 	case WM_MOUSEMOVE:
 	{
+		if (imio.WantCaptureKeyboard)
+		{
+			break;
+		}
 		POINTS pt = MAKEPOINTS(lPARAM);
 		if (pt.x >= 0 && pt.x < width && pt.y >= 0 && pt.y < height)
 		{
@@ -188,30 +205,50 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPARAM) noe
 	break;
 	case WM_LBUTTONDOWN:
 	{
+		if (imio.WantCaptureKeyboard)
+		{
+			break;
+		}
 		POINTS pt = MAKEPOINTS(lPARAM);
 		mouse.OnLeftPressed(pt.x, pt.y);
 	}
 	break;
 	case WM_RBUTTONDOWN:
 	{
+		if (imio.WantCaptureKeyboard)
+		{
+			break;
+		}
 		POINTS pt = MAKEPOINTS(lPARAM);
 		mouse.OnRightPressed(pt.x, pt.y);
 	}
 	break;
 	case WM_LBUTTONUP:
 	{
+		if (imio.WantCaptureKeyboard)
+		{
+			break;
+		}
 		POINTS pt = MAKEPOINTS(lPARAM);
 		mouse.OnLeftReleased(pt.x, pt.y);
 	}
 	break;
 	case WM_RBUTTONUP:
 	{
+		if (imio.WantCaptureKeyboard)
+		{
+			break;
+		}
 		POINTS pt = MAKEPOINTS(lPARAM);
 		mouse.OnRightReleased(pt.x, pt.y);
 	}
 	break;
 	case WM_MOUSEWHEEL:
 	{
+		if (imio.WantCaptureKeyboard)
+		{
+			break;
+		}
 		POINTS pt = MAKEPOINTS(lPARAM);
 		const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
 		mouse.OnWheelDelta(pt.x, pt.y, delta);

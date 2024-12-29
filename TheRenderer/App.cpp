@@ -10,10 +10,9 @@
 #include "Surface.h"
 #include "GDIPlusManager.h"
 #include "Imgui/imgui.h"
-#include "Imgui/Imgui_Impl/imgui_impl_win32.h"
-#include "Imgui/Imgui_Impl/imgui_impl_dx11.h"
-GDIPlusManager gdipm;
 
+GDIPlusManager gdipm;
+namespace dx = DirectX;
 App::App()
 	:
 	wnd(800, 600, "The Donkey Fart Box")
@@ -71,30 +70,40 @@ App::App()
 	drawables.reserve(nDrawables);
 	std::generate_n(std::back_inserter(drawables), nDrawables, f);
 	//const auto s = Surface::FromFile("Images\\Trollface.png");
-	wnd.Gfx().SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
+	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 3.0f / 4.0f, 0.5f, 40.0f));
+	//wnd.Gfx().SetCamera(dx::XMMatrixTranslation(0.0f, 0.0f, 20.0f));
 }
 
 void App::DoFrame()
 {
-	const auto dt = timer.Mark();
-	wnd.Gfx().ClearBuffer(0.07f, 0.0f, 0.12f);
+	const auto dt = timer.Mark() * simulationSpeed;
+	
+	wnd.Gfx().BeginFrame(0.0f, 0.0f, 0.0f);
+	wnd.Gfx().SetCamera(cam.GetMatrix());
 	for (auto& d : drawables)
 	{
 		d->Update(wnd.keyboard.KeyIsPressed(VK_CONTROL) ? 0.0f : dt);
 		d->Draw(wnd.Gfx());
 	}
-
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-	static bool show_demo_window = true;
-	if (show_demo_window)
+	static char buffer[1024];
+	if (ImGui::Begin("Simulation Speed"))
 	{
-		ImGui::ShowDemoWindow(&show_demo_window);
+		ImGui::SliderFloat("Simulation Speed", &simulationSpeed, 0.0f, 4.0f);
+		ImGui::Text("Render engine average %.3f ms/frame (%.0fps)", 1000.0f/ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::InputText("Example text box", buffer, sizeof(buffer));
+		if (ImGui::Button("Reset simulation speed"))
+		{
+			ResetSimulationSpeed(1.0f);
+		}
+		cam.SpawnControlWindow();
 	}
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	ImGui::End();
 	wnd.Gfx().EndFrame();
+}
+
+void App::ResetSimulationSpeed(float value)
+{
+	simulationSpeed = 1.0f;
 }
 
 App::~App()
