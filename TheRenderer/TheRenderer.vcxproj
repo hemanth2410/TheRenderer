@@ -233,7 +233,6 @@
   <ItemGroup>
     <Image Include="..\..\..\..\Downloads\nuclear_14752.ico" />
     <Image Include="Eye_TRed.png" />
-    <Image Include="Images\Buggalu.png" />
     <Image Include="Images\Cricket.jpg" />
     <Image Include="Trollface.png" />
   </ItemGroup>

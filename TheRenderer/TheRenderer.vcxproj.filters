@@ -330,9 +330,6 @@
     <Image Include="Images\Cricket.jpg">
       <Filter>Images</Filter>
     </Image>
-    <Image Include="Images\Buggalu.png">
-      <Filter>Images</Filter>
-    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="DXGetErrorDescription.inl">
