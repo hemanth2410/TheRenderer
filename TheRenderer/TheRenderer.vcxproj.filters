@@ -37,6 +37,15 @@
     <Filter Include="Header Files\Primitives">
       <UniqueIdentifier>{2b66730f-35fb-4efa-99a7-6ce67c22bde2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Images">
+      <UniqueIdentifier>{b1dfcdac-e451-4c31-b57d-8ac90c46ddc0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Imgui">
+      <UniqueIdentifier>{35ccd96e-00fa-4154-84c6-63b7d38340d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Imgui\Impl">
+      <UniqueIdentifier>{309d7bb1-9ee7-4314-8e08-621337b4bc64}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WinMain.cpp">
@@ -113,6 +122,42 @@
     </ClCompile>
     <ClCompile Include="dxerr.cpp">
       <Filter>DxErr</Filter>
+    </ClCompile>
+    <ClCompile Include="Surface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GDIPlusManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Source Files\Bindables</Filter>
+    </ClCompile>
+    <ClCompile Include="Sheet.cpp">
+      <Filter>Source Files\Drawables</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler.cpp">
+      <Filter>Source Files\Bindables</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\imgui.cpp">
+      <Filter>Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\imgui_demo.cpp">
+      <Filter>Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\imgui_draw.cpp">
+      <Filter>Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\imgui_widgets.cpp">
+      <Filter>Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\Imgui_Impl\imgui_impl_dx11.cpp">
+      <Filter>Imgui\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\Imgui_Impl\imgui_impl_win32.cpp">
+      <Filter>Imgui\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGuiManager.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -224,6 +269,48 @@
     <ClInclude Include="dxerr.h">
       <Filter>DxErr</Filter>
     </ClInclude>
+    <ClInclude Include="Surface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GDIPlusManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Header Files\Bindables</Filter>
+    </ClInclude>
+    <ClInclude Include="Sheet.h">
+      <Filter>Header Files\Drawables</Filter>
+    </ClInclude>
+    <ClInclude Include="Sampler.h">
+      <Filter>Header Files\Bindables</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\imconfig.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\imgui.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\imgui_internal.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\imstb_rectpack.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\imstb_textedit.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\imstb_truetype.h">
+      <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\Imgui_Impl\imgui_impl_dx11.h">
+      <Filter>Imgui\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\Imgui_Impl\imgui_impl_win32.h">
+      <Filter>Imgui\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TheRenderer.rc">
@@ -233,6 +320,18 @@
   <ItemGroup>
     <Image Include="..\..\..\..\Downloads\nuclear_14752.ico">
       <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Eye_TRed.png">
+      <Filter>Images</Filter>
+    </Image>
+    <Image Include="Trollface.png">
+      <Filter>Images</Filter>
+    </Image>
+    <Image Include="Images\Cricket.jpg">
+      <Filter>Images</Filter>
+    </Image>
+    <Image Include="Images\Buggalu.png">
+      <Filter>Images</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
@@ -257,6 +356,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="ColorBlendVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="TexturePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="TextureVS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

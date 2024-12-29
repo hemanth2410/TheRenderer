@@ -8,6 +8,7 @@
 #include <optional>
 #include "StringConversion.h"
 #include "WindowsThrowMacros.h"
+#include "Imgui/Imgui_Impl/imgui_impl_win32.h"
 Window::WindowClass Window::WindowClass::wndClass;
 Window::WindowClass::WindowClass() noexcept :hInst(GetModuleHandle(nullptr))
 {
@@ -75,6 +76,8 @@ Window::Window(int width, int height, const char* name)
 	else
 	{
 		ShowWindow(hWnd, SW_SHOWDEFAULT);
+		// Init Imgui Impl
+		ImGui_ImplWin32_Init(hWnd);
 		// Create graphics object
 		pGfx = std::make_unique<Graphics>(hWnd);
 		UpdateWindow(hWnd); // Ensures the window is redrawn
@@ -83,6 +86,7 @@ Window::Window(int width, int height, const char* name)
 
 Window::~Window()
 {
+	ImGui_ImplWin32_Shutdown();
 	DestroyWindow(hWnd);
 }
 
@@ -130,6 +134,10 @@ LRESULT CALLBACK Window::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 
 LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPARAM) noexcept
 {
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lPARAM))
+	{
+		return true;
+	}
 	switch (msg)
 	{
 	case WM_CLOSE:
