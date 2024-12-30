@@ -10,7 +10,8 @@ Box::Box(Graphics& gfx,
 	std::uniform_real_distribution<float>& ddist,
 	std::uniform_real_distribution<float>& odist,
 	std::uniform_real_distribution<float>& rdist,
-	std::uniform_real_distribution<float>& bdist)
+	std::uniform_real_distribution<float>& bdist,
+	DirectX::XMFLOAT4 materialColor, float specularIntensity, float specularPower)
 	:
 	r(rdist(rng)),
 	droll(ddist(rng)),
@@ -30,47 +31,27 @@ Box::Box(Graphics& gfx,
 		struct Vertex
 		{
 			dx::XMFLOAT3 pos;
+			dx::XMFLOAT3 n;
 		};
-		const auto model = Cube::Make<Vertex>();
+		auto model = Cube::MakeIndependent<Vertex>();
+		model.SetNormalsIndependentFlat();
 
 		AddStaticBind(std::make_unique<VertexBuffer>(gfx, model.vertices));
 
-		auto pvs = std::make_unique<VertexShader>(gfx, L"ColorIndexVS.cso");
+		auto pvs = std::make_unique<VertexShader>(gfx, L"PhongShadingVS.cso");
 		auto pvsbc = pvs->GetBytecode();
 		AddStaticBind(std::move(pvs));
 
-		AddStaticBind(std::make_unique<PixelShader>(gfx, L"ColorIndexPS.cso"));
+		AddStaticBind(std::make_unique<PixelShader>(gfx, L"PhongShadingPS.cso"));
 
 		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, model.indices));
 
-		struct PixelShaderConstants
-		{
-			struct
-			{
-				float r;
-				float g;
-				float b;
-				float a;
-			} face_colors[8];
-		};
-		const PixelShaderConstants cb2 =
-		{
-			{
-				{ 1.0f,1.0f,1.0f },
-				{ 1.0f,0.0f,0.0f },
-				{ 0.0f,1.0f,0.0f },
-				{ 1.0f,1.0f,0.0f },
-				{ 0.0f,0.0f,1.0f },
-				{ 1.0f,0.0f,1.0f },
-				{ 0.0f,1.0f,1.0f },
-				{ 0.0f,0.0f,0.0f },
-			}
-		};
-		AddStaticBind(std::make_unique<PixelConstantBuffer<PixelShaderConstants>>(gfx, cb2));
+
 
 		const std::vector<D3D11_INPUT_ELEMENT_DESC> ied =
 		{
 			{ "Position",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0 },
+			{ "Normal",0,DXGI_FORMAT_R32G32B32_FLOAT,0,12,D3D11_INPUT_PER_VERTEX_DATA,0 },
 		};
 		AddStaticBind(std::make_unique<InputLayout>(gfx, ied, pvsbc));
 
@@ -82,7 +63,15 @@ Box::Box(Graphics& gfx,
 	}
 
 	AddBind(std::make_unique<TransformCbuf>(gfx, *this));
-
+	struct PSMaterialConstant {
+		alignas(16) dx::XMFLOAT4 color;
+		float specularIntensity;
+		float specularPower;
+	}colorConst;
+	colorConst.color = materialColor;
+	colorConst.specularIntensity = specularIntensity;
+	colorConst.specularPower = specularPower;
+	AddBind(std::make_unique<PixelConstantBuffer<PSMaterialConstant>>(gfx, colorConst, 1u));
 	// model deformation transform (per instance, not stored as bind)
 	dx::XMStoreFloat3x3(
 		&mt,
@@ -107,5 +96,4 @@ DirectX::XMMATRIX Box::GetTransformXM() const noexcept
 		dx::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
 		dx::XMMatrixTranslation(r, 0.0f, 0.0f) *
 		dx::XMMatrixRotationRollPitchYaw(theta, phi, chi);
-		//dx::XMMatrixTranslation(0.0f, 0.0f, 20.0f); //No longer used
 }

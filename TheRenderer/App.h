@@ -3,6 +3,7 @@
 #include "PersistantTimer.h"
 #include "ImGuiManager.h"
 #include "Camera.h"
+#include "PointLight.h"
 class App
 {
 public:
@@ -21,5 +22,6 @@ private:
 	bool showDemoWindow = true;
 	float simulationSpeed = 1.0f;
 	Camera cam;
+	PointLight pointLight;
 	static constexpr size_t nDrawables = 180;
 };

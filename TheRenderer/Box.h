@@ -9,7 +9,8 @@ public:
 		std::uniform_real_distribution<float>& ddist,
 		std::uniform_real_distribution<float>& odist,
 		std::uniform_real_distribution<float>& rdist,
-		std::uniform_real_distribution<float>& bdist);
+		std::uniform_real_distribution<float>& bdist,
+		DirectX::XMFLOAT4 materialColor, float specularIntensity, float specularPower);
 	void Update(float dt) noexcept override;
 	DirectX::XMMATRIX GetTransformXM() const noexcept override;
 private:
