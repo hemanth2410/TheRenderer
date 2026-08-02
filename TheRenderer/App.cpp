@@ -6,11 +6,15 @@
 #include <memory>
 #include <algorithm>
 #include "GeometryMath.h"
-//#include "Sheet.h"
+#include "Sheet.h"
 #include "Surface.h"
 #include "GDIPlusManager.h"
 #include "Imgui/imgui.h"
-
+#include "Pyramid.h"
+#include "Melon.h"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 GDIPlusManager gdipm;
 namespace dx = DirectX;
@@ -19,6 +23,9 @@ App::App()
 	wnd(1366, 768, "The Donkey Fart Box"),
 	pointLight(wnd.Gfx())
 {
+	Assimp::Importer imp;
+	auto model = imp.ReadFile("Models\\Monkey.fbx",
+		aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 	class Factory
 	{
 	public:
@@ -81,9 +88,9 @@ App::App()
 	Factory f(wnd.Gfx());
 	drawables.reserve(nDrawables);
 	std::generate_n(std::back_inserter(drawables), nDrawables, f);
-	//const auto s = Surface::FromFile("Images\\Trollface.png");
+	const auto s = Surface::FromFile("Images\\Trollface.png");
 	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 768.0f/1366.0f, 0.5f, 40.0f));
-	//wnd.Gfx().SetCamera(dx::XMMatrixTranslation(0.0f, 0.0f, 20.0f));
+	wnd.Gfx().SetCamera(dx::XMMatrixTranslation(0.0f, 0.0f, 20.0f));
 }
 
 void App::DoFrame()
@@ -127,6 +134,7 @@ App::~App()
 
 int App::Go()
 {
+
 	while (true)
 	{
 		// process all messages pending, but to not block for new messages

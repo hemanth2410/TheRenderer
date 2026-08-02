@@ -58,6 +58,7 @@ void SolidSphere::SetColor(DirectX::XMFLOAT4 inColor) noexcept
 	//cbuf->Bind(gfx);
 	//mcBuf.Update(gfx, mData);
 	//mcBuf.Bind(gfx);
+	mData.color = inColor;
 }
 
 
