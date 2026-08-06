@@ -1,39 +1,37 @@
 cbuffer LightCBuf
 {
     float3 lightPos;
-    float4 lightColor;
-    float4 ambient;
-    float4 diffuseLight;
+    float3 ambient;
+    float3 diffuseColor;
     float diffuseIntensity;
     float attConst;
     float attLin;
     float attQuad;
 };
-cbuffer ObjectCbuf
+
+cbuffer ObjectCBuf
 {
     float3 materialColor;
     float specularIntensity;
     float specularPower;
 };
-/*static const float3 materialColor = { 0.7f, 0.7f, 0.9f };
-static const float3 ambient = { 0.05f, 0.05f, 0.05f };
-static const float3 diffuseLight = { 1.0f, 1.0f, 1.0f };
 
-static const float diffuseIntensity = 1.0f;
-static const float attConst = 1.0f;
-static const float attLin = 0.045f;
-static const float attQuad = 0.0075f;*/
 
-float4 main(float3 worldPos : Position, float3 n : Normal) : SV_TARGET
+float4 main(float3 worldPos : Position, float3 n : Normal) : SV_Target
 {
-    const float3 vTol = lightPos - worldPos;
-    const float distTol = length(vTol);
-    const float3 dirTol = vTol / distTol;
-    const float att = 1.0f / (attConst + attLin * distTol + attQuad * (distTol * distTol));
-    const float3 diffuse = lightColor.xyz * diffuseIntensity * att * max(0.0f, dot(dirTol, n));
-    const float3 w = n * dot(vTol, n);
-    const float3 r = w * 2.0f - vTol;
-    const float3 specular = att * (diffuse * diffuseIntensity) * specularIntensity * pow(max(0.0f, dot(normalize(-r), normalize(worldPos))), specularPower);
-   
-    return float4(saturate(diffuse + ambient.xyz * specular) * materialColor.xyz, 1.0f);
+	// fragment to light vector data
+    const float3 vToL = lightPos - worldPos;
+    const float distToL = length(vToL);
+    const float3 dirToL = vToL / distToL;
+	// attenuation
+    const float att = 1.0f / (attConst + attLin * distToL + attQuad * (distToL * distToL));
+	// diffuse intensity
+    const float3 diffuse = diffuseColor * diffuseIntensity * att * max(0.0f, dot(dirToL, n));
+	// reflected light vector
+    const float3 w = n * dot(vToL, n);
+    const float3 r = w * 2.0f - vToL;
+	// calculate specular intensity based on angle between viewing vector and reflection vector, narrow with power function
+    const float3 specular = att * (diffuseColor * diffuseIntensity) * specularIntensity * pow(max(0.0f, dot(normalize(-r), normalize(worldPos))), specularPower);
+	// final color
+    return float4(saturate((diffuse + ambient + specular) * materialColor), 1.0f);
 }

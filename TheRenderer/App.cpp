@@ -1,131 +1,65 @@
 #include "App.h"
-//#include "Melon.h"
-//#include "Pyramid.h"
-#include <sstream>
-#include "Box.h"
+#include "AssTest.h"
 #include <memory>
 #include <algorithm>
 #include "GeometryMath.h"
-#include "Sheet.h"
 #include "Surface.h"
 #include "GDIPlusManager.h"
-#include "Imgui/imgui.h"
-#include "Pyramid.h"
-#include "Melon.h"
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#include "imgui/imgui.h"
+
+namespace dx = DirectX;
 
 GDIPlusManager gdipm;
-namespace dx = DirectX;
+
 App::App()
 	:
-	wnd(1366, 768, "The Donkey Fart Box"),
+	wnd(1366, 768, "Render Window"),
 	pointLight(wnd.Gfx())
 {
-	Assimp::Importer imp;
-	auto model = imp.ReadFile("Models\\Monkey.fbx",
-		aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
-	class Factory
-	{
-	public:
-		Factory(Graphics& gfx)
-			:
-			gfx(gfx)
-		{}
-		std::unique_ptr<Drawable> operator()()
-		{
-			/*switch (typedist(rng))
-			{
-			case 0:
-				return std::make_unique<Pyramid>(
-					gfx, rng, adist, ddist,
-					odist, rdist
-				);
-			case 1:
-				return std::make_unique<Box>(
-					gfx, rng, adist, ddist,
-					odist, rdist, bdist
-				);
-			case 2:
-				return std::make_unique<Melon>(
-					gfx, rng, adist, ddist,
-					odist, rdist, longdist, latdist
-				);
-			case 3:
-				return std::make_unique<Sheet>(
-					gfx, rng, adist, ddist,
-					odist, rdist
-				);
-			default:
-				assert(false && "bad drawable type in factory");
-				return {};
-			}*/
-			const DirectX::XMFLOAT4 mat = {cdist(rng), cdist(rng), cdist(rng),1.0f};
-			float specularIntensity = sidist(rng);
-			float specularPower = Spdist(rng);
-			return std::make_unique<Box>(
-				gfx, rng, adist, ddist,
-				odist, rdist, bdist, mat, specularIntensity, specularPower
-			);
-		}
-	private:
-		Graphics& gfx;
-		std::mt19937 rng{ std::random_device{}() };
-		std::uniform_real_distribution<float> adist{ 0.0f,PI * 2.0f };
-		std::uniform_real_distribution<float> ddist{ 0.0f,PI * 0.5f };
-		std::uniform_real_distribution<float> odist{ 0.0f,PI * 0.08f };
-		std::uniform_real_distribution<float> rdist{ 6.0f,20.0f };
-		std::uniform_real_distribution<float> bdist{ 0.4f,3.0f };
-		std::uniform_int_distribution<int> latdist{ 5,20 };
-		std::uniform_int_distribution<int> longdist{ 10,40 };
-		std::uniform_int_distribution<int> typedist{ 0,3 };
-		std::uniform_real_distribution<float> cdist{ 0.0f,1.0f };
-		std::uniform_real_distribution<float> sidist{ 0.0f,1.0f };
-		std::uniform_real_distribution<float> Spdist{ 0.0f,100.0f };
-	};
-
-	Factory f(wnd.Gfx());
-	drawables.reserve(nDrawables);
-	std::generate_n(std::back_inserter(drawables), nDrawables, f);
-	const auto s = Surface::FromFile("Images\\Trollface.png");
-	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 768.0f/1366.0f, 0.5f, 40.0f));
-	wnd.Gfx().SetCamera(dx::XMMatrixTranslation(0.0f, 0.0f, 20.0f));
+	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 768.0f / 1366.0f, 0.5f, 400.0f));
 }
 
 void App::DoFrame()
 {
-	const auto dt = timer.Mark() * simulationSpeed;
-	
-	wnd.Gfx().BeginFrame(0.0f, 0.0f, 0.0f);
+	const auto dt = timer.Mark() * speed_factor;
+	wnd.Gfx().BeginFrame(0.07f, 0.0f, 0.12f);
 	wnd.Gfx().SetCamera(cam.GetMatrix());
 	pointLight.Bind(wnd.Gfx(), cam.GetMatrix());
-	for (auto& d : drawables)
-	{
-		d->Update(wnd.keyboard.KeyIsPressed(VK_CONTROL) ? 0.0f : dt);
-		d->Draw(wnd.Gfx());
-	}
+
+	const auto transform = dx::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
+		dx::XMMatrixTranslation(pos.x, pos.y, pos.z) * dx::XMMatrixScaling(pos.scale, pos.scale, pos.scale);
+	Ethan.Draw(wnd.Gfx(), transform);
 	pointLight.Draw(wnd.Gfx());
-	static char buffer[1024];
-	if (ImGui::Begin("Simulation Speed"))
-	{
-		ImGui::SliderFloat("Simulation Speed", &simulationSpeed, 0.0f, 6.0f,"%.4f",3.2f);
-		ImGui::Text("Render engine average %.3f ms/frame (%.0fps)", 1000.0f/ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		ImGui::InputText("Example text box", buffer, sizeof(buffer));
-		if (ImGui::Button("Reset simulation speed"))
-		{
-			ResetSimulationSpeed(1.0f);
-		}
-		cam.SpawnControlWindow();
-		pointLight.SpawnControlWindow();
-	}
-	ImGui::End();
+
+	// imgui windows
+	cam.SpawnControlWindow();
+	pointLight.SpawnControlWindow();
+	ShowModelWindow();
+
+	// present
 	wnd.Gfx().EndFrame();
 }
 
-void App::ResetSimulationSpeed(float value)
+void App::ShowModelWindow()
 {
-	simulationSpeed = 1.0f;
+	if (ImGui::Begin("Model"))
+	{
+		using namespace std::string_literals;
+
+		ImGui::Text("Orientation");
+		ImGui::SliderAngle("Roll", &pos.roll, -180.0f, 180.0f);
+		ImGui::SliderAngle("Pitch", &pos.pitch, -180.0f, 180.0f);
+		ImGui::SliderAngle("Yaw", &pos.yaw, -180.0f, 180.0f);
+
+		ImGui::Text("Position");
+		ImGui::SliderFloat("X", &pos.x, -500.0f, 500.0f);
+		ImGui::SliderFloat("Y", &pos.y, -500.0f, 500.0f);
+		ImGui::SliderFloat("Z", &pos.z, -500.0f, 500.0f);
+
+		ImGui::Text("Scale");
+		ImGui::SliderFloat("Scale", &pos.scale, 0.0f, 1.0f);
+	}
+	ImGui::End();
 }
 
 App::~App()
@@ -134,7 +68,6 @@ App::~App()
 
 int App::Go()
 {
-
 	while (true)
 	{
 		// process all messages pending, but to not block for new messages
