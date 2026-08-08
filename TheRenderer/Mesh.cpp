@@ -1,4 +1,36 @@
 #include "Mesh.h"
+#include "imgui/imgui.h"
+#include <unordered_map>
+#include <sstream>
+#include "GeometryMath.h"
+#include "Transform.h"
+#include "GameCoordinates.h"
+namespace dx = DirectX;
+
+ModelException::ModelException(int line, const char* file, std::string note) noexcept
+	:
+	ChiliException(line, file),
+	note(std::move(note))
+{}
+
+const char* ModelException::what() const noexcept
+{
+	std::ostringstream oss;
+	oss << ChiliException::what() << std::endl
+		<< "[Note] " << GetNote();
+	whatBuffer = oss.str();
+	return whatBuffer.c_str();
+}
+
+const char* ModelException::GetType() const noexcept
+{
+	return "Chili Model Exception";
+}
+
+const std::string& ModelException::GetNote() const noexcept
+{
+	return note;
+}
 
 // Mesh
 Mesh::Mesh(Graphics& gfx, std::vector<std::unique_ptr<Bind::Bindable>> bindPtrs)
@@ -23,7 +55,7 @@ Mesh::Mesh(Graphics& gfx, std::vector<std::unique_ptr<Bind::Bindable>> bindPtrs)
 
 	AddBind(std::make_unique<Bind::TransformCbuf>(gfx, *this));
 }
-void Mesh::Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noexcept(!IS_DEBUG)
+void Mesh::Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd
 {
 	DirectX::XMStoreFloat4x4(&transform, accumulatedTransform);
 	Drawable::Draw(gfx);
@@ -34,16 +66,22 @@ DirectX::XMMATRIX Mesh::GetTransformXM() const noexcept
 }
 
 
+
 // Node
-Node::Node(std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& transform) noxnd
+Node::Node(std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& _transform, std::string name) noxnd
 	:
-meshPtrs(std::move(meshPtrs))
+meshPtrs(std::move(meshPtrs)),
+name(name)
 {
-	DirectX::XMStoreFloat4x4(&this->transform, transform);
+	DirectX::XMStoreFloat4x4(&transform, _transform);
+	DirectX::XMStoreFloat4x4(&appliedTransform, dx::XMMatrixIdentity());
 }
 void Node::Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd
 {
-	const auto built = DirectX::XMLoadFloat4x4(&transform) * accumulatedTransform;
+	const auto built = 
+		DirectX::XMLoadFloat4x4(&appliedTransform) *
+		DirectX::XMLoadFloat4x4(&transform)* 
+		accumulatedTransform;
 	for (const auto pm : meshPtrs)
 	{
 		pm->Draw(gfx, built);
@@ -58,28 +96,264 @@ void Node::AddChild(std::unique_ptr<Node> pChild) noxnd
 	assert(pChild);
 	childPtrs.push_back(std::move(pChild));
 }
-
-
+void Node::ShowTree(int& nodeIndexTracked, std::optional<int>& selectedIndex, Node*& pSelectedNode) const noexcept
+{
+	const int currentNodeIndex = nodeIndexTracked;
+	nodeIndexTracked++;
+	const auto node_flags = ImGuiTreeNodeFlags_OpenOnArrow 
+		| ((currentNodeIndex == selectedIndex.value_or(-1)) ? ImGuiTreeNodeFlags_Selected : 0) 
+		| ((childPtrs.size() == 0) ? ImGuiTreeNodeFlags_Leaf : 0);
+	const auto expanded = (ImGui::TreeNodeEx((void*)(intptr_t)currentNodeIndex, node_flags, name.c_str()));
+		if (ImGui::IsItemClicked())
+		{
+			selectedIndex = currentNodeIndex;
+			pSelectedNode = const_cast<Node*>(this);
+		}
+		/*for (const auto& pm : meshPtrs)
+		{
+			ImGui::Text("Mesh");
+		}*/
+		if (expanded)
+		{
+			for (const auto& pc : childPtrs)
+			{
+				pc->ShowTree(nodeIndexTracked, selectedIndex, pSelectedNode);
+			}
+			ImGui::TreePop();
+		}
+		
+}
+void Node::SetAppliedTransform(DirectX::FXMMATRIX transform) noexcept
+{
+	dx::XMStoreFloat4x4(&appliedTransform, transform);
+}
+std::string Node::GetName()noexcept
+{
+	return name;
+}
 // Model
-Model::Model(Graphics& gfx, const std::string fileName)
+
+class ModelWindow
+{
+public:
+	void Show(const char* windowName, const Node& root) noexcept
+	{
+		windowName = windowName ? windowName : "Model Hierarchy";
+		int nodeIndexTracker = 0;
+		if (ImGui::Begin(windowName)) {
+			//ImGui::Columns(2, nullptr, true);
+			root.ShowTree(nodeIndexTracker, selectedIndex, pSelectedNode);
+			if (pSelectedNode != nullptr)
+			{
+				auto& transform = transforms[*selectedIndex];
+				//ImGui::NextColumn();
+				//ImGui::Text("Transform");
+				//ImGui::InputFloat3("Position", transform.position);
+				//ImGui::InputFloat3("Rotation", transform.rotation);
+				//ImGui::InputFloat3("Scale", transform.scale);
+				///*ImGui::SliderAngle("Pitch", &transform.pitch, -180.0f, 180.0f);
+				//ImGui::SliderAngle("Yaw", &transform.yaw, -180.0f, 180.0f);
+				//ImGui::SliderAngle("Roll", &transform.roll, -180.0f, 180.0f);*/
+				///*ImGui::Text("Position");
+				//ImGui::SliderFloat("X", &transform.posX, -20.0f, 20.0f);
+				//ImGui::SliderFloat("Y", &transform.posY, -20.0f, 20.0f);
+				//ImGui::SliderFloat("Z", &transform.posZ, -20.0f, 20.0f);
+				//ImGui::Text("Scale");
+				//ImGui::SliderFloat("X##Scale", &transform.scaleX, 0.01f, 2.0f, "%.2f", 2.0f);
+				//ImGui::SliderFloat("Y##Scale", &transform.scaleY, 0.01f, 2.0f, "%.2f", 2.0f);
+				//ImGui::SliderFloat("Z##Scale", &transform.scaleZ, 0.01f, 2.0f, "%.2f", 2.0f);*/
+				//ImGui::LabelText("##ScaleLabel", "Unit Scale Factor : %f", scale);
+
+				// custom stuff
+
+				Transform t;
+				t.SetPosition(transform.position[0], transform.position[1], transform.position[2]);
+				// existing mapping (see GetTransform() below): rotation[0]=pitch, rotation[1]=roll, rotation[2]=yaw
+				t.SetRotationEuler(
+					to_rad(transform.rotation[0]),
+					to_rad(transform.rotation[2]),
+					to_rad(transform.rotation[1])
+				);
+				t.SetScale(transform.scale[0], transform.scale[1], transform.scale[2]);
+
+				transformWindow.SpawnTransformWindow(t, pSelectedNode->GetName().c_str());
+
+				// write back any edits made in the new window into the existing float arrays
+				transform.position[0] = t.position.x;
+				transform.position[1] = t.position.y;
+				transform.position[2] = t.position.z;
+				const Vector3 euler = t.rotation.ToEuler(); // .x=pitch .y=yaw .z=roll
+				transform.rotation[0] = to_deg(euler.x);
+				transform.rotation[2] = to_deg(euler.y);
+				transform.rotation[1] = to_deg(euler.z);
+				transform.scale[0] = t.scale.x;
+				transform.scale[1] = t.scale.y;
+				transform.scale[2] = t.scale.z;
+			}
+			//root.ShowTree(nodeIndexTracker, selectedIndex);
+			
+		}
+		ImGui::End();
+
+
+	}
+	dx::XMMATRIX GetTransform() const noexcept {
+		if (!selectedIndex.has_value()) {
+			return DirectX::XMMatrixIdentity();
+		}
+		const auto& transform = transforms.at(*selectedIndex);
+		return
+			DirectX::XMMatrixRotationRollPitchYaw(to_rad(transform.rotation[0]), to_rad(transform.rotation[2]), to_rad(transform.rotation[1])) *
+			DirectX::XMMatrixTranslation(transform.position[0], transform.position[1], transform.position[2]) *
+			DirectX::XMMatrixScaling(transform.scale[0], transform.scale[1], transform.scale[2]);
+	}
+	Node* GetSelectedNode() const noexcept
+	{
+		return pSelectedNode;
+	}
+	void SetScaleFactor(float inScale)
+	{
+		scale = inScale;
+	}
+private:
+	std::optional<int> selectedIndex;
+	Node* pSelectedNode = nullptr;
+	struct TransformParameters{
+		float rotation[3] = {0,0,0};
+		float position[3] = { 0,0,0 };
+		float scale[3] = { 1,1,1 };
+	};
+	Transform _transform;
+	std::unordered_map<int, TransformParameters> transforms;
+	std::unordered_map<int, Transform> _transforms;
+	TransformWindow transformWindow;
+	float scale = 1.0f;
+};
+
+Model::Model(Graphics& gfx, const std::string fileName, std::optional<float> manualSourceUnitInMeters)
+	:
+	pWindow(std::make_unique<ModelWindow>())
 {
 	Assimp::Importer imp;
 	const auto pScene = imp.ReadFile(fileName.c_str(),
 		aiProcess_Triangulate |
-		aiProcess_JoinIdenticalVertices
+		aiProcess_JoinIdenticalVertices |
+		aiProcess_ConvertToLeftHanded |
+		aiProcess_GenNormals |
+		aiProcess_GenBoundingBoxes
 	);
+	if (pScene == nullptr)
+	{
+		throw ModelException(__LINE__, __FILE__, imp.GetErrorString());
+	}
 
 	for (size_t i = 0; i < pScene->mNumMeshes; i++)
 	{
 		meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i]));
 	}
+	float importScale;
+	if (manualSourceUnitInMeters.has_value())
+	{
+		// caller told us explicitly (needed for formats with no unit metadata)
+		importScale = *manualSourceUnitInMeters;
+		scaleFactor = importScale * 100.0f; // keep GetScale()'s existing "relative to cm" reporting consistent
+	}
+	else
+	{
+		double rawScaleFactor = -999;
+		if (pScene->mMetaData && pScene->mMetaData->Get("UnitScaleFactor", rawScaleFactor))
+		{
+			// FBX: UnitScaleFactor is relative to FBX's own cm baseline
+			scaleFactor = static_cast<float>(rawScaleFactor);
+			importScale = GameCoordinates::CentimetersToMeters(scaleFactor);
 
+		}
+		else
+		{
+			// No metadata available (OBJ, most glTF, etc.). glTF's spec
+			// mandates meters, so assuming 1.0f is correct there; for OBJ
+			// (which has no defined unit at all) this is a guess -- pass
+			// manualSourceUnitInMeters explicitly for OBJ files where you
+			// know the actual authored unit.
+			scaleFactor = 1.0f;
+			importScale = 1.0f;
+			char buf[256];
+			sprintf_s(buf, "[UnitScaleFactor Debug] file=%s found=%d rawScaleFactor=%f\n",
+				fileName.c_str(), pScene->mMetaData ? pScene->mMetaData->Get("UnitScaleFactor", rawScaleFactor) : -1, rawScaleFactor);
+			OutputDebugStringA(buf);
+		}
+	}
 	pRoot = ParseNode(*pScene->mRootNode);
+	// --- bake the unit conversion into the root node's stored transform,
+	// ONCE, here, at load time. This is the only place a scale conversion
+	// happens; everything downstream (Draw, ShowWindow, any future system
+	// that queries a Node's transform) sees an already-correct meters value
+	// and never needs to know or care what unit the source file used.
+	pRoot->transform = [&]
+		{
+			DirectX::XMFLOAT4X4 scaled;
+			DirectX::XMStoreFloat4x4(&scaled,
+				DirectX::XMMatrixScaling(importScale, importScale, importScale) *
+				DirectX::XMLoadFloat4x4(&pRoot->transform)
+			);
+			return scaled;
+		}();
+	pWindow->SetScaleFactor(scaleFactor);
+	// --- sanity check: does the imported (now-meters) bounding box look
+	// like a plausible real-world size? Catches "forgot to apply unit
+	// conversion" or "applied it twice" immediately at load time instead of
+	// after an hour of "why does my model look wrong" debugging.
+	{
+		DirectX::XMFLOAT3 mn{ FLT_MAX, FLT_MAX, FLT_MAX };
+		DirectX::XMFLOAT3 mx{ -FLT_MAX, -FLT_MAX, -FLT_MAX };
+		bool any = false;
+		for (size_t i = 0; i < pScene->mNumMeshes; i++)
+		{
+			const auto& aabb = pScene->mMeshes[i]->mAABB;
+			mn.x = std::min(mn.x, aabb.mMin.x); mn.y = std::min(mn.y, aabb.mMin.y); mn.z = std::min(mn.z, aabb.mMin.z);
+			mx.x = std::max(mx.x, aabb.mMax.x); mx.y = std::max(mx.y, aabb.mMax.y); mx.z = std::max(mx.z, aabb.mMax.z);
+			any = true;
+		}
+		if (any)
+		{
+			const float sizeX = (mx.x - mn.x) * importScale;
+			const float sizeY = (mx.y - mn.y) * importScale;
+			const float sizeZ = (mx.z - mn.z) * importScale;
+			const float largest = std::max({ sizeX, sizeY, sizeZ });
+			if (largest < GameCoordinates::SuspiciouslySmallMeters ||
+				largest > GameCoordinates::SuspiciouslyLargeMeters)
+			{
+				std::ostringstream oss;
+				oss << "[Model Import Warning] '" << fileName << "' bounding box after unit "
+					<< "conversion is " << sizeX << " x " << sizeY << " x " << sizeZ
+					<< " meters. This looks implausible -- check that the source unit "
+					<< "detection (scaleFactor=" << scaleFactor << ", importScale=" << importScale
+					<< ") is actually correct for this file.\n";
+				OutputDebugStringA(oss.str().c_str());
+			}
+		}
+	}
 }
-void Model::Draw(Graphics& gfx, DirectX::FXMMATRIX transform) const
+
+float Model::GetScale() const noxnd
 {
-	pRoot->Draw(gfx, transform);
+	return scaleFactor;
 }
+
+void Model::ShowWindow(const char* windowName) noexcept {
+	pWindow->Show(windowName, *pRoot);
+}
+void Model::Draw(Graphics& gfx) const noxnd
+{
+	//pRoot->Draw(gfx, pWindow->GetTransform());
+	if (auto node = pWindow->GetSelectedNode())
+	{
+		node->SetAppliedTransform(pWindow->GetTransform());
+	}
+	pRoot->Draw(gfx, DirectX::XMMatrixIdentity());
+}
+Model::~Model() noexcept
+{}
 std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh)
 {
 	namespace dx = DirectX;
@@ -150,7 +424,7 @@ std::unique_ptr<Node> Model::ParseNode(const aiNode& node)
 		curMeshPtrs.push_back(meshPtrs.at(meshIdx).get());
 	}
 
-	auto pNode = std::make_unique<Node>(std::move(curMeshPtrs), transform);
+	auto pNode = std::make_unique<Node>(std::move(curMeshPtrs), transform, std::string(node.mName.C_Str()));
 	for (size_t i = 0; i < node.mNumChildren; i++)
 	{
 		pNode->AddChild(ParseNode(*node.mChildren[i]));

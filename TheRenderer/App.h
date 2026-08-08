@@ -24,8 +24,8 @@ private:
 	float speed_factor = 1.0f;
 	Camera cam;
 	PointLight pointLight;
-	Model Ethan{ wnd.Gfx(),"Models\\Ethan_WithAccessories\\char_EthanFullRig.fbx" };
-	struct
+	Model Ethan{ wnd.Gfx(),"Models\\BoxFus.fbx" };
+	/*struct
 	{
 		float roll = 0.0f;
 		float pitch = 0.0f;
@@ -34,5 +34,5 @@ private:
 		float y = 0.0f;
 		float z = 0.0f;
 		float scale = 1.0f;
-	} pos;
+	} pos;*/
 };

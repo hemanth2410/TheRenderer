@@ -1,6 +1,6 @@
 #include "PointLight.h"
 #include "imgui/imgui.h"
-
+#include "GameCoordinates.h"
 PointLight::PointLight(Graphics& gfx, float radius)
 	:
 	mesh(gfx, radius),
@@ -14,12 +14,12 @@ void PointLight::SpawnControlWindow() noexcept
 	if (ImGui::Begin("Light"))
 	{
 		ImGui::Text("Position");
-		ImGui::SliderFloat("X", &cbData.pos.x, -60.0f, 60.0f, "%.1f");
-		ImGui::SliderFloat("Y", &cbData.pos.y, -60.0f, 60.0f, "%.1f");
-		ImGui::SliderFloat("Z", &cbData.pos.z, -60.0f, 60.0f, "%.1f");
+		ImGui::SliderFloat("X", &cbData.pos.x, -2000.0f, 2000.0f, "%.1f");
+		ImGui::SliderFloat("Y", &cbData.pos.y, -2000.0f, 2000.0f, "%.1f");
+		ImGui::SliderFloat("Z", &cbData.pos.z, -2000.0f, 2000.0f, "%.1f");
 
 		ImGui::Text("Intensity/Color");
-		ImGui::SliderFloat("Intensity", &cbData.diffuseIntensity, 0.01f, 2.0f, "%.2f", 2);
+		ImGui::SliderFloat("Intensity", &cbData.diffuseIntensity, 0.01f, 5.0f, "%.2f", 2);
 		ImGui::ColorEdit3("Diffuse Color", &cbData.diffuseColor.x);
 		ImGui::ColorEdit3("Ambient", &cbData.ambient.x);
 

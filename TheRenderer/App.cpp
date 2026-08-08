@@ -6,7 +6,7 @@
 #include "Surface.h"
 #include "GDIPlusManager.h"
 #include "imgui/imgui.h"
-
+#include "GameCoordinates.h"
 namespace dx = DirectX;
 
 GDIPlusManager gdipm;
@@ -14,9 +14,9 @@ GDIPlusManager gdipm;
 App::App()
 	:
 	wnd(1366, 768, "Render Window"),
-	pointLight(wnd.Gfx())
+	pointLight(wnd.Gfx(), 0.15f)
 {
-	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 768.0f / 1366.0f, 0.5f, 400.0f));
+	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 768.0f / 1366.0f, 0.5f, GameCoordinates::MetersToCentimeters(200)));
 }
 
 void App::DoFrame()
@@ -26,21 +26,22 @@ void App::DoFrame()
 	wnd.Gfx().SetCamera(cam.GetMatrix());
 	pointLight.Bind(wnd.Gfx(), cam.GetMatrix());
 
-	const auto transform = dx::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
-		dx::XMMatrixTranslation(pos.x, pos.y, pos.z) * dx::XMMatrixScaling(pos.scale, pos.scale, pos.scale);
-	Ethan.Draw(wnd.Gfx(), transform);
+	/*const auto transform = dx::XMMatrixRotationRollPitchYaw(pos.roll, pos.pitch, pos.yaw) *
+		dx::XMMatrixTranslation(pos.x, pos.y, pos.z) * dx::XMMatrixScaling(pos.scale, pos.scale, pos.scale);*/
+	Ethan.Draw(wnd.Gfx());
+	Ethan.ShowWindow("Model Window");
 	pointLight.Draw(wnd.Gfx());
 
 	// imgui windows
 	cam.SpawnControlWindow();
 	pointLight.SpawnControlWindow();
-	ShowModelWindow();
+	//ShowModelWindow();
 
 	// present
 	wnd.Gfx().EndFrame();
 }
 
-void App::ShowModelWindow()
+/*void App::ShowModelWindow()
 {
 	if (ImGui::Begin("Model"))
 	{
@@ -60,7 +61,7 @@ void App::ShowModelWindow()
 		ImGui::SliderFloat("Scale", &pos.scale, 0.0f, 1.0f);
 	}
 	ImGui::End();
-}
+}*/
 
 App::~App()
 {}

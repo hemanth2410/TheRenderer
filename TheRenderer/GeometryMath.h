@@ -30,3 +30,9 @@ constexpr T to_rad(T deg)
 {
 	return deg * PI / (T)180.0;
 }
+
+template<typename T>
+constexpr T to_deg(T rad)
+{
+	return rad* ((T)180.0 / PI);
+}
