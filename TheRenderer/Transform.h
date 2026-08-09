@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
+#include <iostream>
+using namespace DirectX;
 class Vector3
 {
 public:
@@ -12,6 +14,44 @@ public:
 
     Vector3() : x(0.0f), y(0.0f), z(0.0f) {}
     Vector3(float xVal, float yVal, float zVal) : x(xVal), y(yVal), z(zVal) {}
+    XMFLOAT3 ToXmFloat3() noexcept;
+    XMVECTOR ToXmVector() noexcept;
+    static Vector3 Forward() noexcept {
+        return Vector3(0, 0, 1);
+    }
+    static Vector3 Right() noexcept {
+        return Vector3(1, 0, 0);
+    }
+    static Vector3 Up() noexcept {
+        return Vector3(0, 1, 0);
+    }
+    static Vector3 FromXmVector(XMVECTOR dxVector) noexcept;
+
+    Vector3& operator += (const Vector3& rhs) {
+        this->x += rhs.x;
+        this->y += rhs.y;
+        this->z += rhs.z;
+        return *this;
+    }
+
+    Vector3& operator *= (const float value) { // Passing float by value is faster than const float&
+        this->x *= value;
+        this->y *= value;
+        this->z *= value;
+        return *this; 
+    }
+    Vector3 operator * (const float& value)
+    {
+        return Vector3(this->x * value, this->y * value, this->z * value);
+    }
+
+    Vector3 operator + (const Vector3& rhs)
+    {
+        this->x += rhs.x;
+        this->y += rhs.y;
+        this->z += rhs.z;
+        return *this;
+    }
 };
 
 class Quaternion
@@ -72,6 +112,9 @@ public:
     Vector3 position;
     Vector3 scale = Vector3(1.0f, 1.0f, 1.0f);
     Quaternion rotation;
+    Vector3 forward = Vector3::Forward();
+    Vector3 right = Vector3::Right();
+    Vector3 up = Vector3::Up();
     // --- setters -------------------------------------------------------
     void SetPosition(const Vector3& pos) noexcept
     {
@@ -98,17 +141,22 @@ public:
     void SetRotation(const Quaternion& q) noexcept
     {
         rotation = q;
+        computeLocalVectors();
     }
     // Convenience: set rotation directly from Euler angles (radians).
     void SetRotationEuler(float pitch, float yawAngle, float roll) noexcept
     {
         rotation = Quaternion::FromEuler(pitch, yawAngle, roll);
+        computeLocalVectors();
     }
 
     Vector3 GetEuletRotation()
     {
         return rotation.ToEuler();
+        //computeLocalVectors();
     }
+
+
 
     // --- matrix build ----------------------------------------------------
     // Composes Scale * Rotation * Translation, matching the SRT order
@@ -127,7 +175,7 @@ public:
     }
 
 private:
-
+    void computeLocalVectors() noexcept;
 };
 
 class TransformWindow

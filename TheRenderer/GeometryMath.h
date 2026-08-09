@@ -18,7 +18,22 @@ T wrap_angle(T theta)
 		(modded - (T)2.0 * (T)PI_D) :
 		modded;
 }
+template <typename T>
+T wrap_angle_degrees(T theta)
+{
+    // Modulo by 360.0 degrees instead of 2 * PI
+    T modded = fmod(theta, (T)360.0);
 
+    // Shift to (-180, 180] range
+    if (modded > (T)180.0) {
+        modded -= (T)360.0;
+    }
+    else if (modded <= (T)-180.0) {
+        modded += (T)360.0;
+    }
+
+    return modded;
+}
 template<typename T>
 constexpr T interpolate(const T& src, const T& dst, float alpha)
 {

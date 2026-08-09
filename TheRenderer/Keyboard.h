@@ -64,6 +64,10 @@ public:
 		{
 			return code;
 		}
+		explicit operator bool() const noexcept
+		{
+			return IsValid();
+		}
 	};
 public:
 	Keyboard() = default;

@@ -5,6 +5,7 @@
 #include "GeometryMath.h"
 #include "Transform.h"
 #include "GameCoordinates.h"
+#include "Surface.h"
 namespace dx = DirectX;
 
 ModelException::ModelException(int line, const char* file, std::string note) noexcept
@@ -33,27 +34,29 @@ const std::string& ModelException::GetNote() const noexcept
 }
 
 // Mesh
-Mesh::Mesh(Graphics& gfx, std::vector<std::unique_ptr<Bind::Bindable>> bindPtrs)
+Mesh::Mesh(Graphics& gfx, std::vector<std::shared_ptr<Bind::Bindable>> bindPtrs)
 {
-	if (!IsStaticInitialized())
-	{
-		AddStaticBind(std::make_unique<Bind::Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
-	}
-
+	//if (!IsStaticInitialized())
+	//{
+	//	AddStaticBind(std::make_unique<Bind::Topology>(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+	//}
+	//addBind(std::make_shared<Bind::Topology>(gfx, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+	addBind(Bind::Topology::Resolve(gfx, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 	for (auto& pb : bindPtrs)
 	{
-		if (auto pi = dynamic_cast<Bind::IndexBuffer*>(pb.get()))
-		{
-			AddIndexBuffer(std::unique_ptr<Bind::IndexBuffer>{ pi });
-			pb.release();
-		}
-		else
-		{
-			AddBind(std::move(pb));
-		}
+		//if (auto pi = dynamic_cast<Bind::IndexBuffer*>(pb.get()))
+		//{
+		//	AddIndexBuffer(std::unique_ptr<Bind::IndexBuffer>{ pi });
+		//	pb.release();
+		//}
+		//else
+		//{
+		//	AddBind(std::move(pb));
+		//}
+		addBind(std::move(pb));
 	}
 
-	AddBind(std::make_unique<Bind::TransformCbuf>(gfx, *this));
+	addBind(std::make_shared<Bind::TransformCbuf>(gfx, *this));
 }
 void Mesh::Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd
 {
@@ -68,8 +71,9 @@ DirectX::XMMATRIX Mesh::GetTransformXM() const noexcept
 
 
 // Node
-Node::Node(std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& _transform, std::string name) noxnd
+Node::Node(int id, std::vector<Mesh*> meshPtrs, const DirectX::XMMATRIX& _transform, std::string name) noxnd
 	:
+id(id),
 meshPtrs(std::move(meshPtrs)),
 name(name)
 {
@@ -96,17 +100,18 @@ void Node::AddChild(std::unique_ptr<Node> pChild) noxnd
 	assert(pChild);
 	childPtrs.push_back(std::move(pChild));
 }
-void Node::ShowTree(int& nodeIndexTracked, std::optional<int>& selectedIndex, Node*& pSelectedNode) const noexcept
+void Node::ShowTree(Node*& pSelectedNode) const noexcept
 {
-	const int currentNodeIndex = nodeIndexTracked;
-	nodeIndexTracked++;
+	/*const int currentNodeIndex = nodeIndexTracked;
+	nodeIndexTracked++;*/
+	const int selectedId = (pSelectedNode == nullptr) ? -1 : pSelectedNode->GetId();
 	const auto node_flags = ImGuiTreeNodeFlags_OpenOnArrow 
-		| ((currentNodeIndex == selectedIndex.value_or(-1)) ? ImGuiTreeNodeFlags_Selected : 0) 
+		| ((GetId() == selectedId) ? ImGuiTreeNodeFlags_Selected : 0)
 		| ((childPtrs.size() == 0) ? ImGuiTreeNodeFlags_Leaf : 0);
-	const auto expanded = (ImGui::TreeNodeEx((void*)(intptr_t)currentNodeIndex, node_flags, name.c_str()));
+	const auto expanded = (ImGui::TreeNodeEx((void*)(intptr_t)GetId(), node_flags, name.c_str()));
 		if (ImGui::IsItemClicked())
 		{
-			selectedIndex = currentNodeIndex;
+			//selectedIndex = GetId();
 			pSelectedNode = const_cast<Node*>(this);
 		}
 		/*for (const auto& pm : meshPtrs)
@@ -117,7 +122,7 @@ void Node::ShowTree(int& nodeIndexTracked, std::optional<int>& selectedIndex, No
 		{
 			for (const auto& pc : childPtrs)
 			{
-				pc->ShowTree(nodeIndexTracked, selectedIndex, pSelectedNode);
+				pc->ShowTree(pSelectedNode);
 			}
 			ImGui::TreePop();
 		}
@@ -131,6 +136,10 @@ std::string Node::GetName()noexcept
 {
 	return name;
 }
+int Node::GetId() const noexcept
+{
+	return id;
+}
 // Model
 
 class ModelWindow
@@ -142,10 +151,10 @@ public:
 		int nodeIndexTracker = 0;
 		if (ImGui::Begin(windowName)) {
 			//ImGui::Columns(2, nullptr, true);
-			root.ShowTree(nodeIndexTracker, selectedIndex, pSelectedNode);
+			root.ShowTree(pSelectedNode);
 			if (pSelectedNode != nullptr)
 			{
-				auto& transform = transforms[*selectedIndex];
+				auto& transform = transforms[pSelectedNode->GetId()];
 				//ImGui::NextColumn();
 				//ImGui::Text("Transform");
 				//ImGui::InputFloat3("Position", transform.position);
@@ -198,10 +207,10 @@ public:
 
 	}
 	dx::XMMATRIX GetTransform() const noexcept {
-		if (!selectedIndex.has_value()) {
+		if (pSelectedNode == nullptr) {
 			return DirectX::XMMatrixIdentity();
 		}
-		const auto& transform = transforms.at(*selectedIndex);
+		const auto& transform = transforms.at(pSelectedNode->GetId());
 		return
 			DirectX::XMMatrixRotationRollPitchYaw(to_rad(transform.rotation[0]), to_rad(transform.rotation[2]), to_rad(transform.rotation[1])) *
 			DirectX::XMMatrixTranslation(transform.position[0], transform.position[1], transform.position[2]) *
@@ -216,7 +225,7 @@ public:
 		scale = inScale;
 	}
 private:
-	std::optional<int> selectedIndex;
+	//std::optional<int> selectedIndex;
 	Node* pSelectedNode = nullptr;
 	struct TransformParameters{
 		float rotation[3] = {0,0,0};
@@ -230,7 +239,7 @@ private:
 	float scale = 1.0f;
 };
 
-Model::Model(Graphics& gfx, const std::string fileName, std::optional<float> manualSourceUnitInMeters)
+Model::Model(Graphics& gfx, const std::string fileName, std::string folderName, std::optional<float> manualSourceUnitInMeters)
 	:
 	pWindow(std::make_unique<ModelWindow>())
 {
@@ -240,7 +249,8 @@ Model::Model(Graphics& gfx, const std::string fileName, std::optional<float> man
 		aiProcess_JoinIdenticalVertices |
 		aiProcess_ConvertToLeftHanded |
 		aiProcess_GenNormals |
-		aiProcess_GenBoundingBoxes
+		aiProcess_GenBoundingBoxes |
+		aiProcess_CalcTangentSpace
 	);
 	if (pScene == nullptr)
 	{
@@ -249,7 +259,7 @@ Model::Model(Graphics& gfx, const std::string fileName, std::optional<float> man
 
 	for (size_t i = 0; i < pScene->mNumMeshes; i++)
 	{
-		meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i]));
+		meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i], pScene->mMaterials, folderName));
 	}
 	float importScale;
 	if (manualSourceUnitInMeters.has_value())
@@ -283,7 +293,8 @@ Model::Model(Graphics& gfx, const std::string fileName, std::optional<float> man
 			OutputDebugStringA(buf);
 		}
 	}
-	pRoot = ParseNode(*pScene->mRootNode);
+	int nextId = 0;
+	pRoot = ParseNode(nextId, *pScene->mRootNode);
 	// --- bake the unit conversion into the root node's stored transform,
 	// ONCE, here, at load time. This is the only place a scale conversion
 	// happens; everything downstream (Draw, ShowWindow, any future system
@@ -333,6 +344,7 @@ Model::Model(Graphics& gfx, const std::string fileName, std::optional<float> man
 			}
 		}
 	}
+	_folderName = folderName;
 }
 
 float Model::GetScale() const noxnd
@@ -354,22 +366,26 @@ void Model::Draw(Graphics& gfx) const noxnd
 }
 Model::~Model() noexcept
 {}
-std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh)
+std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const aiMaterial* const* pMaterials, std::string folderName)
 {
 	namespace dx = DirectX;
 	using Dvtx::VertexLayout;
-
+	using namespace Bind;
 	Dvtx::VertexBuffer vbuf(std::move(
 		VertexLayout{}
 		.Append(VertexLayout::Position3D)
 		.Append(VertexLayout::Normal)
+		//.Append(VertexLayout::Tangent)
+		.Append(VertexLayout::Texture2D)
 	));
-
+	//auto& material = *pMaterials[mesh.mMaterialIndex];
 	for (unsigned int i = 0; i < mesh.mNumVertices; i++)
 	{
 		vbuf.EmplaceBack(
 			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mVertices[i]),
-			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i])
+			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
+			//*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mTangents[i]),
+			*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i]) // -> dont forget to load this texture coords
 		);
 	}
 
@@ -383,33 +399,95 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh)
 		indices.push_back(face.mIndices[1]);
 		indices.push_back(face.mIndices[2]);
 	}
+	float shininess = 50.0f;
+	std::vector<std::shared_ptr<Bind::Bindable>> bindablePtrs;
+	bool hasSpecularMap = false;
+	bool hasNormalMap = false;
+	using namespace std::string_literals;
+	const auto base = folderName;
+	if (mesh.mMaterialIndex > 0)
+	{
+		//using namespace std::string_literals;
+		auto& material = *pMaterials[mesh.mMaterialIndex];
 
-	std::vector<std::unique_ptr<Bind::Bindable>> bindablePtrs;
+		aiString textFileName;
+		material.GetTexture(aiTextureType_DIFFUSE, 0, &textFileName);
+		bindablePtrs.push_back(Texture::Resolve(gfx, base + textFileName.C_Str()));
+		const auto specResult = material.GetTexture(aiTextureType_SPECULAR, 0, &textFileName);
+		{
+			char buf[256];
+			sprintf_s(buf, "[Specular Debug] materialIndex=%d specResult=%d filename=%s\n",
+				mesh.mMaterialIndex, specResult, specResult == aiReturn_SUCCESS ? textFileName.C_Str() : "N/A");
+			OutputDebugStringA(buf);
+		}
+		if (material.GetTexture(aiTextureType_SPECULAR, 0, &textFileName) == aiReturn_SUCCESS)
+		{
+			bindablePtrs.push_back(Texture::Resolve(gfx, base + textFileName.C_Str(), 1));
+			hasSpecularMap = true;
+		}
+		else {
+			material.Get(AI_MATKEY_SHININESS, shininess);
+		}
 
-	bindablePtrs.push_back(std::make_unique<Bind::VertexBuffer>(gfx, vbuf));
+		//normal map debug
 
-	bindablePtrs.push_back(std::make_unique<Bind::IndexBuffer>(gfx, indices));
+		// 1. Try standard Normals slot first
+		auto normalResult = material.GetTexture(aiTextureType_NORMALS, 0, &textFileName);
 
-	auto pvs = std::make_unique<Bind::VertexShader>(gfx, L"PhongShadingVS.cso");
+		// 2. Fall back to Height slot if Normals slot is empty
+		if (normalResult != aiReturn_SUCCESS)
+		{
+			normalResult = material.GetTexture(aiTextureType_HEIGHT, 0, &textFileName);
+		}
+		char buf[256];
+		sprintf_s(buf, "[Normal Debug] materialIndex=%d normalResult=%d filename=%s\n",
+			mesh.mMaterialIndex, normalResult, normalResult == aiReturn_SUCCESS ? textFileName.C_Str() : "N/A");
+		OutputDebugStringA(buf);
+		if (normalResult == aiReturn_SUCCESS)
+		{
+			bindablePtrs.push_back(Texture::Resolve(gfx, base + textFileName.C_Str(), 2));
+			hasNormalMap = true;
+		}
+		bindablePtrs.push_back(Bind::Sampler::Resolve(gfx));
+	}
+	auto meshTag = base + "%" + mesh.mName.C_Str();
+	bindablePtrs.push_back(VertexBuffer::Resolve(gfx, meshTag, vbuf));
+
+	bindablePtrs.push_back(IndexBuffer::Resolve(gfx, meshTag, indices));
+
+	auto pvs = VertexShader::Resolve(gfx, "PhongShadingVS.cso");
 	auto pvsbc = pvs->GetBytecode();
 	bindablePtrs.push_back(std::move(pvs));
+	bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
+	if (hasSpecularMap && !hasNormalMap)
+	{
+		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongShadingSpechPS.cso"));
+	}
+	else if (hasSpecularMap && hasNormalMap)
+	{
+		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongShadingNS_PS.cso"));
+	}
+	else
+	{
+		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongShadingPS.cso"));
+	}
 
-	bindablePtrs.push_back(std::make_unique<Bind::PixelShader>(gfx, L"PhongShadingPS.cso"));
 
-	bindablePtrs.push_back(std::make_unique<Bind::InputLayout>(gfx, vbuf.GetLayout().GetD3DLayout(), pvsbc));
+	
 
 	struct PSMaterialConstant
 	{
-		DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f };
-		float specularIntensity = 0.6f;
-		float specularPower = 30.0f;
-		float padding[3];
+		//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f };
+		float specularIntensity = 1.0f;
+		float specularPower;
+		float padding[2];
 	} pmc;
-	bindablePtrs.push_back(std::make_unique<Bind::PixelConstantBuffer<PSMaterialConstant>>(gfx, pmc, 1u));
+	pmc.specularPower = shininess;
+	bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstant>::Resolve(gfx, pmc, 1u));
 
 	return std::make_unique<Mesh>(gfx, std::move(bindablePtrs));
 }
-std::unique_ptr<Node> Model::ParseNode(const aiNode& node)
+std::unique_ptr<Node> Model::ParseNode(int& nextId, const aiNode& node) noexcept
 {
 	namespace dx = DirectX;
 	const auto transform = dx::XMMatrixTranspose(dx::XMLoadFloat4x4(
@@ -424,10 +502,10 @@ std::unique_ptr<Node> Model::ParseNode(const aiNode& node)
 		curMeshPtrs.push_back(meshPtrs.at(meshIdx).get());
 	}
 
-	auto pNode = std::make_unique<Node>(std::move(curMeshPtrs), transform, std::string(node.mName.C_Str()));
+	auto pNode = std::make_unique<Node>(nextId++, std::move(curMeshPtrs), transform, std::string(node.mName.C_Str()));
 	for (size_t i = 0; i < node.mNumChildren; i++)
 	{
-		pNode->AddChild(ParseNode(*node.mChildren[i]));
+		pNode->AddChild(ParseNode(nextId, *node.mChildren[i]));
 	}
 
 	return pNode;

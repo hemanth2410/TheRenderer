@@ -14,9 +14,9 @@ void PointLight::SpawnControlWindow() noexcept
 	if (ImGui::Begin("Light"))
 	{
 		ImGui::Text("Position");
-		ImGui::SliderFloat("X", &cbData.pos.x, -2000.0f, 2000.0f, "%.1f");
-		ImGui::SliderFloat("Y", &cbData.pos.y, -2000.0f, 2000.0f, "%.1f");
-		ImGui::SliderFloat("Z", &cbData.pos.z, -2000.0f, 2000.0f, "%.1f");
+		ImGui::SliderFloat("X", &cbData.pos.x, -20.0f, 20.0f, "%.1f");
+		ImGui::SliderFloat("Y", &cbData.pos.y, -20.0f, 20.0f, "%.1f");
+		ImGui::SliderFloat("Z", &cbData.pos.z, -20.0f, 20.0f, "%.1f");
 
 		ImGui::Text("Intensity/Color");
 		ImGui::SliderFloat("Intensity", &cbData.diffuseIntensity, 0.01f, 5.0f, "%.2f", 2);

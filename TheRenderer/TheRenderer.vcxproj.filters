@@ -162,9 +162,6 @@
     <ClCompile Include="SolidSphere.cpp">
       <Filter>Source Files\Drawables</Filter>
     </ClCompile>
-    <ClCompile Include="AssTest.cpp">
-      <Filter>Source Files\Drawables</Filter>
-    </ClCompile>
     <ClCompile Include="Vertex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -176,6 +173,9 @@
     </ClCompile>
     <ClCompile Include="Transform.cpp">
       <Filter>Source Files\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="BindableCodex.h">
+      <Filter>Header Files\Bindables</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -251,9 +251,6 @@
     <ClInclude Include="Drawable.h">
       <Filter>Header Files\Drawables</Filter>
     </ClInclude>
-    <ClInclude Include="DrawableBase.h">
-      <Filter>Header Files\Drawables</Filter>
-    </ClInclude>
     <ClInclude Include="IndexedTriangleList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -268,9 +265,6 @@
     </ClInclude>
     <ClInclude Include="Texture.h">
       <Filter>Header Files\Bindables</Filter>
-    </ClInclude>
-    <ClInclude Include="Sheet.h">
-      <Filter>Header Files\Drawables</Filter>
     </ClInclude>
     <ClInclude Include="Sampler.h">
       <Filter>Header Files\Bindables</Filter>
@@ -309,12 +303,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SolidSphere.h">
-      <Filter>Header Files\Drawables</Filter>
-    </ClInclude>
-    <ClInclude Include="AssTest.h">
-      <Filter>Header Files\Drawables</Filter>
-    </ClInclude>
-    <ClInclude Include="TestObject.h">
       <Filter>Header Files\Drawables</Filter>
     </ClInclude>
     <ClInclude Include="Vertex.h">
@@ -401,6 +389,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="SolidVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PhongShadingSpechPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PhongShadingNS_PS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

@@ -17,14 +17,19 @@ public:
 private:
 	void DoFrame();
 	void ShowModelWindow();
+	void ShowRawInputWindow();
 private:
+	int x = 0, y = 0;
 	ImGuiManager imgui;
 	Window wnd;
 	PersistantTimer timer;
 	float speed_factor = 1.0f;
 	Camera cam;
 	PointLight pointLight;
-	Model Ethan{ wnd.Gfx(),"Models\\BoxFus.fbx" };
+	Model Ethan{ wnd.Gfx(),"Models\\NanoSuit_Textured\\nanosuit.obj", "Models\\NanoSuit_Textured\\"};
+	Model Ethan2{ wnd.Gfx(),"Models\\Bricks\\Bricks.obj", "Models\\Bricks\\"};
+	Vector3 movementVecor;
+	Vector3 rotationDelta;
 	/*struct
 	{
 		float roll = 0.0f;

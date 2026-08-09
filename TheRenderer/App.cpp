@@ -1,5 +1,4 @@
 #include "App.h"
-#include "AssTest.h"
 #include <memory>
 #include <algorithm>
 #include "GeometryMath.h"
@@ -17,6 +16,7 @@ App::App()
 	pointLight(wnd.Gfx(), 0.15f)
 {
 	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 768.0f / 1366.0f, 0.5f, GameCoordinates::MetersToCentimeters(200)));
+
 }
 
 void App::DoFrame()
@@ -30,42 +30,87 @@ void App::DoFrame()
 		dx::XMMatrixTranslation(pos.x, pos.y, pos.z) * dx::XMMatrixScaling(pos.scale, pos.scale, pos.scale);*/
 	Ethan.Draw(wnd.Gfx());
 	Ethan.ShowWindow("Model Window");
+	Ethan2.Draw(wnd.Gfx());
+	Ethan2.ShowWindow("Model Window # 2");
+	//ShowRawInputWindow();
 	pointLight.Draw(wnd.Gfx());
 
 	// imgui windows
-	cam.SpawnControlWindow();
+	//cam.SpawnControlWindow();
 	pointLight.SpawnControlWindow();
 	//ShowModelWindow();
-
+	cam.Translate(movementVecor, dt);
+	cam.Rotate(rotationDelta.x, rotationDelta.y, dt);
 	// present
 	wnd.Gfx().EndFrame();
-}
-
-/*void App::ShowModelWindow()
-{
-	if (ImGui::Begin("Model"))
+	//wnd.DisableCursor();
+	while (const auto e = wnd.keyboard.ReadKey())
 	{
-		using namespace std::string_literals;
+		if (!e.IsPress())
+		{
+			continue;
+		}
+		switch(e.GetCode())
+		{
+		case VK_ESCAPE:
+			if (wnd.CursorEnabled())
+			{
+				wnd.DisableCursor();
+				wnd.mouse.EnableRaw();
+			}
+			else
+			{
+				wnd.EnableCursor();
+				wnd.mouse.DisableRaw();
+			}
+			break;
 
-		ImGui::Text("Orientation");
-		ImGui::SliderAngle("Roll", &pos.roll, -180.0f, 180.0f);
-		ImGui::SliderAngle("Pitch", &pos.pitch, -180.0f, 180.0f);
-		ImGui::SliderAngle("Yaw", &pos.yaw, -180.0f, 180.0f);
-
-		ImGui::Text("Position");
-		ImGui::SliderFloat("X", &pos.x, -500.0f, 500.0f);
-		ImGui::SliderFloat("Y", &pos.y, -500.0f, 500.0f);
-		ImGui::SliderFloat("Z", &pos.z, -500.0f, 500.0f);
-
-		ImGui::Text("Scale");
-		ImGui::SliderFloat("Scale", &pos.scale, 0.0f, 1.0f);
+			/*if (wnd.CursorEnabled())
+			{
+				wnd.DisableCursor();
+				wnd.mouse.EnableRaw();
+			}
+			else
+			{
+				wnd.EnableCursor();
+				wnd.mouse.DisableRaw();
+			}*/
+		}
 	}
-	ImGui::End();
-}*/
+	if (!wnd.CursorEnabled())
+	{
+
+		movementVecor.z = wnd.keyboard.KeyIsPressed('W') ? 1.0f : wnd.keyboard.KeyIsPressed('S') ? -1.0 : 0;
+		movementVecor.x = wnd.keyboard.KeyIsPressed('D') ? 1.0f : wnd.keyboard.KeyIsPressed('A') ? -1.0 : 0;
+		movementVecor.y = wnd.keyboard.KeyIsPressed('E') ? 1.0f : wnd.keyboard.KeyIsPressed('Q') ? -1.0 : 0;
+	}
+	rotationDelta = Vector3();
+	while (const auto delta = wnd.mouse.ReadRawDelta())
+	{
+		if (!wnd.CursorEnabled())
+		{
+			rotationDelta = Vector3(delta->x, delta->y, 0);
+		}
+	}
+	//rotationDelta = Vector3();
+}
 
 App::~App()
 {}
 
+void App::ShowRawInputWindow()
+{
+	while (const auto d = wnd.mouse.ReadRawDelta())
+	{
+		x += d->x;
+		y += d->y;
+	}
+	if (ImGui::Begin("Raw Input"))
+	{
+		ImGui::Text("Delta : (%d,%d)", x, y);
+	}
+	ImGui::End();
+}
 
 int App::Go()
 {

@@ -9,6 +9,7 @@
 #include "StringConversion.h"
 #include "WindowsThrowMacros.h"
 #include "Imgui/Imgui_Impl/imgui_impl_win32.h"
+#include "ImGui/imgui.h"
 Window::WindowClass Window::WindowClass::wndClass;
 Window::WindowClass::WindowClass() noexcept :hInst(GetModuleHandle(nullptr))
 {
@@ -81,6 +82,15 @@ Window::Window(int width, int height, const char* name)
 		// Create graphics object
 		pGfx = std::make_unique<Graphics>(hWnd,width, height);
 		UpdateWindow(hWnd); // Ensures the window is redrawn
+		RAWINPUTDEVICE rid;
+		rid.usUsagePage = 0x01;
+		rid.usUsage = 0x02;
+		rid.dwFlags = 0;
+		rid.hwndTarget = nullptr;
+		if (RegisterRawInputDevices(&rid, 1, sizeof(rid)) == false)
+		{
+			throw CHWND_LAST_EXCEPT();
+		}
 	}
 }
 
@@ -143,9 +153,23 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPARAM) noe
 	{
 	case WM_CLOSE:
 		PostQuitMessage(69);
+		FreeCursor();
 		return 0;
 	case WM_KILLFOCUS:
 		keyboard.ClearState();
+		break;
+	case WM_ACTIVATE:
+		//OutputDebugString("Activated\n");
+		if (!cursourEnabled)
+		{
+			if (wParam && WA_ACTIVE || wParam && WA_CLICKACTIVE)
+			{
+				ConfineCursor();
+			}
+			else {
+				FreeCursor();
+			}
+		}
 		break;
 	case WM_SYSKEYDOWN:
 	case WM_KEYDOWN:
@@ -153,7 +177,7 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPARAM) noe
 		{
 			break;
 		}
-		if (!(lPARAM && 0x40000000) || keyboard.AutorepeatIsEnabled())
+		if (!(lPARAM & 0x40000000) || keyboard.AutorepeatIsEnabled())
 		{
 			keyboard.OnKeyPressed(static_cast<unsigned char>(wParam));
 		}
@@ -254,6 +278,35 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPARAM) noe
 		mouse.OnWheelDelta(pt.x, pt.y, delta);
 	}
 	break;
+	case WM_INPUT:
+		UINT size;
+		if (GetRawInputData(
+			reinterpret_cast<HRAWINPUT>(lPARAM),
+			RID_INPUT,
+			nullptr,
+			&size,
+			sizeof(RAWINPUTHEADER)) == -1)
+		{
+			break;
+		}
+		rawBuffer.resize(size);
+		if (GetRawInputData(
+			reinterpret_cast<HRAWINPUT>(lPARAM),
+			RID_INPUT,
+			rawBuffer.data(),
+			&size,
+			sizeof(RAWINPUTHEADER)
+		) != size)
+		{
+			break;
+		}
+		auto& ri = reinterpret_cast<const RAWINPUT&>(*rawBuffer.data());
+		if (ri.header.dwType == RIM_TYPEMOUSE &&
+			(ri.data.mouse.lLastX != 0 || ri.data.mouse.lLastY != 0))
+		{
+			mouse.OnRawDelta(ri.data.mouse.lLastX, ri.data.mouse.lLastY);
+		}
+		break;
 	}
 	return DefWindowProc(hWnd, msg, wParam, lPARAM);
 }
@@ -328,4 +381,51 @@ std::string Window::HrException::GetErrorDescription() const noexcept
 const char* Window::NoGfxException::GetType() const noexcept
 {
 	return "Chili Window Exception [No Graphics]";
+}
+
+void Window::EnableCursor()noexcept
+{
+	cursourEnabled = true;
+	ShowCursor();
+	EnableImGuiMouse();
+	FreeCursor();
+}
+void Window::DisableCursor() noexcept
+{
+	cursourEnabled = false;
+	HideCursor();
+	DisableImguiMouse();
+	ConfineCursor();
+}
+void Window::HideCursor() noexcept
+{
+	while (::ShowCursor(FALSE) > 0);
+}
+void Window::ShowCursor() noexcept
+{
+	while (::ShowCursor(TRUE) < 0);
+}
+
+void Window::EnableImGuiMouse() noexcept
+{
+	ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+}
+void Window::DisableImguiMouse() noexcept
+{
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouse;
+}
+
+void Window::ConfineCursor() noexcept {
+	RECT rect;
+	GetClientRect(hWnd, &rect);
+	MapWindowPoints(hWnd, nullptr, reinterpret_cast<POINT*>(&rect), 2);
+	ClipCursor(&rect);
+}
+void Window::FreeCursor() noexcept
+{
+	ClipCursor(nullptr);
+}
+bool Window::CursorEnabled() const noexcept
+{
+	return cursourEnabled;
 }

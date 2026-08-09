@@ -1,5 +1,24 @@
 #include "Transform.h"
 #include "imgui/imgui.h"
+
+Vector3 Vector3::FromXmVector(XMVECTOR dxVector) noexcept
+{
+	float x = XMVectorGetX(dxVector);
+	float y = XMVectorGetY(dxVector);
+	float z = XMVectorGetZ(dxVector);
+
+	return(Vector3(x, y, z));
+}
+
+XMFLOAT3 Vector3::ToXmFloat3() noexcept
+{
+	return XMFLOAT3(x, y, z);
+}
+
+XMVECTOR Vector3::ToXmVector() noexcept
+{
+	return XMVectorSet(x, y, z, 0.0f);
+}
 void TransformWindow::SpawnTransformWindow(Transform& transform, const char* transformName) noexcept
 {
 	if (ImGui::Begin("Transform"))
@@ -55,4 +74,19 @@ void TransformWindow::SpawnTransformWindow(Transform& transform, const char* tra
 		ImGui::PopItemWidth();
 	}
 	ImGui::End();
+}
+
+void Transform::computeLocalVectors() noexcept
+{
+	// computing forward vector of transform
+	XMMATRIX modelRotation = XMMatrixRotationQuaternion(rotation.ToXMVector());
+
+	// rotated vectors
+	XMVECTOR rotatedRight = modelRotation.r[0];
+	XMVECTOR rotatedUp = modelRotation.r[1];
+	XMVECTOR rotatedForward = modelRotation.r[2];
+
+	forward = Vector3::FromXmVector(XMVector3Normalize(rotatedForward));
+	right = Vector3::FromXmVector(XMVector3Normalize(rotatedRight));
+	up = Vector3::FromXmVector(XMVector3Normalize(rotatedUp));
 }
