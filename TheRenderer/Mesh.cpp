@@ -6,6 +6,7 @@
 #include "Transform.h"
 #include "GameCoordinates.h"
 #include "Surface.h"
+#include "TransformCbufDoubleboi.h"
 namespace dx = DirectX;
 
 ModelException::ModelException(int line, const char* file, std::string note) noexcept
@@ -56,7 +57,9 @@ Mesh::Mesh(Graphics& gfx, std::vector<std::shared_ptr<Bind::Bindable>> bindPtrs)
 		addBind(std::move(pb));
 	}
 
-	addBind(std::make_shared<Bind::TransformCbuf>(gfx, *this));
+	//addBind(std::make_shared<Bind::TransformCbuf>(gfx, *this));
+	//addBind(std::make_shared<transformcbufdouble>(gfx, *this, 0u, 2u));
+	addBind(std::make_shared<Bind::TransformCbufDoubleboi>(gfx, *this, 0u, 2u));
 }
 void Mesh::Draw(Graphics& gfx, DirectX::FXMMATRIX accumulatedTransform) const noxnd
 {
@@ -375,6 +378,8 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		VertexLayout{}
 		.Append(VertexLayout::Position3D)
 		.Append(VertexLayout::Normal)
+		.Append(VertexLayout::Tangent)
+		.Append(VertexLayout::Bitangent)
 		//.Append(VertexLayout::Tangent)
 		.Append(VertexLayout::Texture2D)
 	));
@@ -384,7 +389,8 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		vbuf.EmplaceBack(
 			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mVertices[i]),
 			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mNormals[i]),
-			//*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mTangents[i]),
+			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mTangents[i]),
+			*reinterpret_cast<dx::XMFLOAT3*>(&mesh.mBitangents[i]),
 			*reinterpret_cast<dx::XMFLOAT2*>(&mesh.mTextureCoords[0][i]) // -> dont forget to load this texture coords
 		);
 	}
@@ -403,10 +409,12 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	std::vector<std::shared_ptr<Bind::Bindable>> bindablePtrs;
 	bool hasSpecularMap = false;
 	bool hasNormalMap = false;
+	bool hasOrmMap = false;
+	bool usePBR = false;
 	using namespace std::string_literals;
 	const auto base = folderName;
-	if (mesh.mMaterialIndex > 0)
-	{
+	//if (mesh.mMaterialIndex > 0)
+	//{
 		//using namespace std::string_literals;
 		auto& material = *pMaterials[mesh.mMaterialIndex];
 
@@ -424,6 +432,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		{
 			bindablePtrs.push_back(Texture::Resolve(gfx, base + textFileName.C_Str(), 1));
 			hasSpecularMap = true;
+			usePBR = false;
 		}
 		else {
 			material.Get(AI_MATKEY_SHININESS, shininess);
@@ -449,17 +458,70 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 			hasNormalMap = true;
 		}
 		bindablePtrs.push_back(Bind::Sampler::Resolve(gfx));
-	}
+		//auto metallicResult = material.GetTexture(aiTextureType_METALNESS, 0, &textFileName);
+		//sprintf_s(buf, "[Metallic Debug] materialIndex=%d metallicResult=%d filename=%s\n",
+		//	mesh.mMaterialIndex, metallicResult, metallicResult == aiReturn_SUCCESS ? textFileName.C_Str() : "N/A");
+		//OutputDebugStringA(buf);
+		//if (metallicResult == aiReturn_SUCCESS)
+		//{
+		//	bindablePtrs.push_back(Texture::Resolve(gfx, base + textFileName.C_Str(), 3));
+		//	hasMetallicMap = true;
+		//	usePBR = true;
+		//}
+		//auto aoResult = material.GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &textFileName);
+		//sprintf_s(buf, "[AO Debug] materialIndex=%d AoResult=%d filename=%s\n",
+		//	mesh.mMaterialIndex, aoResult, aoResult == aiReturn_SUCCESS ? textFileName.C_Str() : "N/A");
+		//OutputDebugStringA(buf);
+		//if (aoResult == aiReturn_SUCCESS)
+		//{
+		//	bindablePtrs.push_back(Texture::Resolve(gfx, base + textFileName.C_Str(), 4));
+		//	hasAoMap = true;
+		//	usePBR = true;
+		//}
+		//else {
+		//	// check if we have a map with name AO.png
+		//	bindablePtrs.push_back(Texture::Resolve(gfx, base + "\\AO.png", 4));
+		//	hasAoMap = true;
+		//	usePBR = true;
+		//}
+		auto ormResult = material.GetTexture(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0, &textFileName);
+		sprintf_s(buf, "[Roughness Debug] materialIndex=%d RoughnessResult=%d filename=%s\n",
+			mesh.mMaterialIndex, ormResult, ormResult == aiReturn_SUCCESS ? textFileName.C_Str() : "N/A");
+		OutputDebugStringA(buf);
+		if (ormResult == aiReturn_SUCCESS)
+		{
+			bindablePtrs.push_back(Texture::Resolve(gfx, base + textFileName.C_Str(), 3));
+			hasOrmMap = true;
+			usePBR = true;
+		}
+	//}
 	auto meshTag = base + "%" + mesh.mName.C_Str();
 	bindablePtrs.push_back(VertexBuffer::Resolve(gfx, meshTag, vbuf));
 
 	bindablePtrs.push_back(IndexBuffer::Resolve(gfx, meshTag, indices));
 
-	auto pvs = VertexShader::Resolve(gfx, "PhongShadingVS.cso");
+	auto pvs = VertexShader::Resolve(gfx, "PhongShadingVS_NRML.cso");// : "PhongShadingVS.cso");
 	auto pvsbc = pvs->GetBytecode();
 	bindablePtrs.push_back(std::move(pvs));
+
 	bindablePtrs.push_back(InputLayout::Resolve(gfx, vbuf.GetLayout(), pvsbc));
-	if (hasSpecularMap && !hasNormalMap)
+
+	// shader mapping trick 
+	// if(!hasMetallic && !hasAO && !hasRoughness) => phong shading with cnostant specular factors
+	// if(!hasMetallic || !hasAo || !hasRoughness) => PBR
+	// if(hasSpeculatMap) => definetly phong shading
+
+	if (hasSpecularMap)
+	{
+		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongShadingNS_PS.cso"));
+	}
+	if (usePBR)
+	{
+		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PBR_Metal_Roughness.cso"));
+		//sprintf_s(buf, "[Shader Debug] loading material %s for model %s\n","PBR_Metal_Roughness",mesh.mName);
+		//OutputDebugStringA(buf);
+	}
+	/*if (hasSpecularMap && !hasNormalMap)
 	{
 		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongShadingSpechPS.cso"));
 	}
@@ -470,7 +532,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 	else
 	{
 		bindablePtrs.push_back(PixelShader::Resolve(gfx, "PhongShadingPS.cso"));
-	}
+	}*/
 
 
 	
@@ -480,9 +542,17 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics& gfx, const aiMesh& mesh, const 
 		//DirectX::XMFLOAT3 color = { 0.6f,0.6f,0.8f };
 		float specularIntensity = 1.0f;
 		float specularPower;
-		float padding[2];
+		BOOL useSpecularMap = FALSE; // BOOL = int, not C++ bool -- guarantees 4 bytes, matches HLSL's int
+		BOOL useNormalMap = FALSE;
+		float metallicFactor = 0;
+		float roughnessFactor = 0.4;
+		float ambientFactor = 0;
+		BOOL useORMMap = FALSE;
 	} pmc;
 	pmc.specularPower = shininess;
+	pmc.useNormalMap = hasNormalMap ? TRUE : FALSE;
+	pmc.useSpecularMap = hasSpecularMap ? TRUE : FALSE;
+	pmc.useORMMap = hasOrmMap ? TRUE : FALSE;
 	bindablePtrs.push_back(PixelConstantBuffer<PSMaterialConstant>::Resolve(gfx, pmc, 1u));
 
 	return std::make_unique<Mesh>(gfx, std::move(bindablePtrs));

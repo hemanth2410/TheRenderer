@@ -8,7 +8,13 @@ cbuffer LightCBuf
     float attLin;
     float attQuad;
 };
-
+cbuffer ObjectCBuf
+{
+    //float3 materialColor;
+    float specularIntensity;
+    float specularPower;
+    float padding[2];
+};
 Texture2D tex;
 Texture2D spec;
 SamplerState splr;
