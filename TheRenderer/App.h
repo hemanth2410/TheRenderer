@@ -26,9 +26,9 @@ private:
 	float speed_factor = 1.0f;
 	Camera cam;
 	PointLight pointLight;
-	Model Ethan{ wnd.Gfx(),"Models\\Fridge\\Fridge.gltf", "Models\\Fridge\\"};
-
-	Model Ethan2{ wnd.Gfx(),"Models\\AK47\\GLTF\\AK_47.gltf", "Models\\AK47\\GLTF\\"};
+	//Model Ethan{ wnd.Gfx(),"Models\\Fridge\\Fridge.gltf", "Models\\Fridge\\"};
+	Model Ethan{ wnd.Gfx(),"Models\\sponza_palace\\scene.gltf", "Models\\sponza_palace\\" };
+	//Model Ethan2{ wnd.Gfx(),"Models\\AK47\\GLTF\\AK_47.gltf", "Models\\AK47\\GLTF\\"};
 	Vector3 movementVecor;
 	Vector3 rotationDelta;
 	/*struct

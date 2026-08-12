@@ -82,6 +82,7 @@ float4 main(float3 worldPos : Position, float3 n : Normal, float3 tan : Tangent,
         N.y = -normalSample.y * 2.0f + 1.0f;
         N.z = normalSample.z;
         N = mul(N, tanToView);
+        N = normalize(N);
     }
     float3 V = normalize(-worldPos);
     float3 L = normalize(lightPos - worldPos);

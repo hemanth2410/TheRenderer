@@ -30,8 +30,8 @@ void App::DoFrame()
 		dx::XMMatrixTranslation(pos.x, pos.y, pos.z) * dx::XMMatrixScaling(pos.scale, pos.scale, pos.scale);*/
 	Ethan.Draw(wnd.Gfx());
 	Ethan.ShowWindow("Model Window");
-	Ethan2.Draw(wnd.Gfx());
-	Ethan2.ShowWindow("Model Window # 2");
+	//Ethan2.Draw(wnd.Gfx());
+	//Ethan2.ShowWindow("Model Window # 2");
 	//ShowRawInputWindow();
 	pointLight.Draw(wnd.Gfx());
 
