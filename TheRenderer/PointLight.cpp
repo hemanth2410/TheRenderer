@@ -1,6 +1,7 @@
 #include "PointLight.h"
 #include "imgui/imgui.h"
 #include "GameCoordinates.h"
+#include "FrameCommander.h"
 PointLight::PointLight(Graphics& gfx, float radius)
 	:
 	mesh(gfx, radius),
@@ -14,9 +15,9 @@ void PointLight::SpawnControlWindow() noexcept
 	if (ImGui::Begin("Light"))
 	{
 		ImGui::Text("Position");
-		ImGui::SliderFloat("X", &cbData.pos.x, -20.0f, 20.0f, "%.1f");
-		ImGui::SliderFloat("Y", &cbData.pos.y, -20.0f, 20.0f, "%.1f");
-		ImGui::SliderFloat("Z", &cbData.pos.z, -20.0f, 20.0f, "%.1f");
+		ImGui::SliderFloat("X", &transform.position.x, -20.0f, 20.0f, "%.1f");
+		ImGui::SliderFloat("Y", &transform.position.y, -20.0f, 20.0f, "%.1f");
+		ImGui::SliderFloat("Z", &transform.position.z, -20.0f, 20.0f, "%.1f");
 
 		ImGui::Text("Intensity/Color");
 		ImGui::SliderFloat("Intensity", &cbData.diffuseIntensity, 0.01f, 5.0f, "%.2f", 2);
@@ -32,6 +33,10 @@ void PointLight::SpawnControlWindow() noexcept
 		{
 			Reset();
 		}
+		// building cBufData
+		cbData.pos.x = transform.position.x;
+		cbData.pos.y = transform.position.y;
+		cbData.pos.z = transform.position.z;
 	}
 	ImGui::End();
 }
@@ -49,10 +54,10 @@ void PointLight::Reset() noexcept
 	};
 }
 
-void PointLight::Draw(Graphics& gfx) const noxnd
+void PointLight::Submit(FrameCommander& frame) const noxnd
 {
 	mesh.SetPos(cbData.pos);
-	mesh.Draw(gfx);
+	mesh.Submit(frame);
 }
 
 void PointLight::Bind(Graphics& gfx, DirectX::FXMMATRIX view) const noexcept

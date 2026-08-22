@@ -4,7 +4,7 @@ namespace Bind
 {
 	TransformCbufDoubleboi::TransformCbufDoubleboi(Graphics& gfx, const Drawable& parent, UINT slotV, UINT slotP)
 		:
-		TransformCbuf(gfx, parent, slotV)
+		TransformCbuf(gfx, slotV)
 	{
 		if (!pPcbuf)
 		{

@@ -6,7 +6,13 @@
 #include "PointLight.h"
 #include "Mesh.h"
 #include <set>
-
+#include "TestPlane.h"
+#include "Stencil.h"
+#include "TestCube.h"
+#include "FrameCommander.h"
+#include "Model.h"
+#include "ScriptCommander.h"
+#include "Material.h"
 class App
 {
 public:
@@ -20,25 +26,18 @@ private:
 	void ShowRawInputWindow();
 private:
 	int x = 0, y = 0;
+	bool showDemoWindow = false;
 	ImGuiManager imgui;
 	Window wnd;
+	//ScriptCommander scriptCommander;
 	PersistantTimer timer;
 	float speed_factor = 1.0f;
 	Camera cam;
-	PointLight pointLight;
-	//Model Ethan{ wnd.Gfx(),"Models\\Fridge\\Fridge.gltf", "Models\\Fridge\\"};
-	Model Ethan{ wnd.Gfx(),"Models\\sponza_palace\\scene.gltf", "Models\\sponza_palace\\" };
-	//Model Ethan2{ wnd.Gfx(),"Models\\AK47\\GLTF\\AK_47.gltf", "Models\\AK47\\GLTF\\"};
+	FrameCommander fc;
+	PointLight light;
+	//TestCube cube{ wnd.Gfx(),4.0f };
+	//TestCube cube2{ wnd.Gfx(),4.0f };
+	Model sponza{ wnd.Gfx(),"Models\\sponza_palace\\scene.gltf",1.0f };
 	Vector3 movementVecor;
 	Vector3 rotationDelta;
-	/*struct
-	{
-		float roll = 0.0f;
-		float pitch = 0.0f;
-		float yaw = 0.0f;
-		float x = 0.0f;
-		float y = 0.0f;
-		float z = 0.0f;
-		float scale = 1.0f;
-	} pos;*/
 };

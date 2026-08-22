@@ -1,5 +1,6 @@
 #include "VertexBuffer.h"
 #include "BindableCodex.h"
+
 namespace Bind
 {
 	VertexBuffer::VertexBuffer(Graphics& gfx, const Dvtx::VertexBuffer& vbuf)

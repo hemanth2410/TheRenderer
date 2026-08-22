@@ -68,8 +68,17 @@ float3 FresnelSchlick(float cosTheta, float3 F0)
 
 float4 main(float3 worldPos : Position, float3 n : Normal, float3 tan : Tangent, float3 bitan : Bitangent, float2 tc : Texcoord) : SV_Target
 {
+    float4 albedo = Albedo.Sample(splr, tc);
+#ifdef ALPHA_MASK_ENABLED
     // Calculations for Normal based on availability of normal map
+    if (dot(n, worldPos) >= 0.0f)
+    {
+        n = -n;
+    }
+    clip(albedo.a < 0.1f ? -1 : 1);
+#endif
     float3 N = normalize(n);
+    
     if (useNormalMap)
     {
         float3x3 tanToView = float3x3(
@@ -87,7 +96,6 @@ float4 main(float3 worldPos : Position, float3 n : Normal, float3 tan : Tangent,
     float3 V = normalize(-worldPos);
     float3 L = normalize(lightPos - worldPos);
     float3 H = normalize(V + L);
-    float3 albedo = Albedo.Sample(splr, tc).rgb;
     float metallic;
     float roughness;
     float ao;
@@ -107,7 +115,7 @@ float4 main(float3 worldPos : Position, float3 n : Normal, float3 tan : Tangent,
     const float distToL = length(lightPos - worldPos); // you already compute L = normalize(lightPos - worldPos) above; distToL needs the un-normalized version too
     const float att = 1.0f / (attConst + attLin * distToL + attQuad * (distToL * distToL));
     
-    float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), albedo, metallic); // dielectrics ~4% reflectance; metals tint by albedo
+    float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), albedo.rgb, metallic); // dielectrics ~4% reflectance; metals tint by albedo
     float D = DistributionGGX(N, H, roughness);
     float G = GeometrySmith(N, V, L, roughness);
     float3 F = FresnelSchlick(max(dot(H, V), 0.0f), F0);
@@ -116,7 +124,7 @@ float4 main(float3 worldPos : Position, float3 n : Normal, float3 tan : Tangent,
     float3 specular = numerator / denominator;
 
     float3 kD = (1.0f - F) * (1.0f - metallic);
-    float3 diffuse = kD * albedo / PI;
+    float3 diffuse = kD * albedo.rgb / PI;
 
     float NdotL = max(dot(N, L), 0.0f);
     float3 outColor = (diffuse + specular + (ambient * ao)) * diffuseColor * diffuseIntensity * att * NdotL;
