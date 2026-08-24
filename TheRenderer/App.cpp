@@ -25,7 +25,7 @@ App::App()
 	light(wnd.Gfx(), 0.15f)
 	//ss(wnd.Gfx(), 0.25f)
 {
-	//cube.SetPos({ 4.0f,0.0f,0.0f });
+	cube.SetPos({ 4.0f,0.0f,0.0f });
 	//cube2.SetPos({ 0.0f,4.0f,0.0f });
 	wnd.Gfx().SetProjection(dx::XMMatrixPerspectiveLH(1.0f, 768.0f / 1366.0f, 0.5f, GameCoordinates::MetersToCentimeters(200)));
 	// loading an image texture
@@ -46,7 +46,7 @@ void App::DoFrame()
 	wnd.Gfx().SetCamera(cam.GetMatrix());
 	light.Bind(wnd.Gfx(), cam.GetMatrix());
 	light.Submit(fc);
-	//cube.Submit(fc);
+	cube.Submit(fc);
 	//cube2.Submit(fc);
 	sponza.Submit(fc);
 	fc.Execute(wnd.Gfx());
@@ -161,9 +161,10 @@ void App::DoFrame()
 			{
 				dcheck(ImGui::SliderFloat(tag("offset"), &v, 0.0f, 1.0f, "%.3f", 2.5f));
 			}
-			if (auto v = buf["materialColor"]; v.Exists())
+			if (auto v = buf["color"]; v.Exists())
 			{
-				dcheck(ImGui::ColorPicker3(tag("Color"), reinterpret_cast<float*>(&static_cast<dx::XMFLOAT3&>(v))));
+				//dcheck(ImGui::ColorPicker3(tag("Color"), reinterpret_cast<float*>(&static_cast<dx::XMFLOAT4&>(v))));
+				dcheck(ImGui::ColorPicker4(tag("color"), reinterpret_cast<float*>(&static_cast<dx::XMFLOAT4&>(v))));
 			}
 			if (auto v = buf["specularColor"]; v.Exists())
 			{
@@ -325,9 +326,11 @@ void App::DoFrame()
 	modelProbe.SpawnWindow(sponza);
 	cam.SpawnControlWindow();
 	light.SpawnControlWindow();
-	//cube.SpawnControlWindow(wnd.Gfx(), "Cube 1");
+	cube.SpawnControlWindow(wnd.Gfx(), "Cube 1");
+	fc.ShowWindows(wnd.Gfx());
 	//cube2.SpawnControlWindow(wnd.Gfx(), "Cube 2");
 	ImGui::End();
+	
 	fc.Reset();
 	wnd.Gfx().EndFrame();
 	//rotationDelta = Vector3();

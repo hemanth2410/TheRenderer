@@ -33,9 +33,9 @@ private:
 	PersistantTimer timer;
 	float speed_factor = 1.0f;
 	Camera cam;
-	FrameCommander fc;
+	FrameCommander fc{ wnd.Gfx() };
 	PointLight light;
-	//TestCube cube{ wnd.Gfx(),4.0f };
+	TestCube cube{ wnd.Gfx(),1.0f };
 	//TestCube cube2{ wnd.Gfx(),4.0f };
 	Model sponza{ wnd.Gfx(),"Models\\sponza_palace\\scene.gltf",1.0f };
 	Vector3 movementVecor;

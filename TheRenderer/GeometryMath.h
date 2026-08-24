@@ -51,3 +51,10 @@ constexpr T to_deg(T rad)
 {
 	return rad* ((T)180.0 / PI);
 }
+
+template<typename T>
+constexpr T gauss(T x, T sigma) noexcept
+{
+	const auto ss = sq(sigma);
+	return ((T)1.0 / sqrt((T)2.0 * (T)PI_D * ss)) * exp(-sq(x) / ((T)2.0 * ss));
+}

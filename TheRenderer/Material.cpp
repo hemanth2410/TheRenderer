@@ -284,7 +284,7 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 			Step draw(2);
 
 			// these can be pass-constant (tricky due to layout issues)
-			auto pvs = VertexShader::Resolve(gfx, "OffsetVS.cso");
+			auto pvs = VertexShader::Resolve(gfx, "SolidVS.cso");
 			auto pvsbc = pvs->GetBytecode();
 			draw.AddBindable(std::move(pvs));
 
@@ -293,20 +293,11 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 
 			{
 				Dcb::RawLayout lay;
-				lay.Add<Dcb::Float3>("materialColor");
+				lay.Add<Dcb::Float4>("color");
 				auto buf = Dcb::Buffer(std::move(lay));
-				buf["materialColor"] = DirectX::XMFLOAT3{ 1.0f,0.4f,0.4f };
+				buf["color"] = DirectX::XMFLOAT4{ 1.0f,0.4f,0.4f,1.0f };
 				draw.AddBindable(std::make_shared<Bind::CachingPixelConstantBufferEx>(gfx, buf, 1u));
 			}
-
-			{
-				Dcb::RawLayout lay;
-				lay.Add<Dcb::Float>("offset");
-				auto buf = Dcb::Buffer(std::move(lay));
-				buf["offset"] = 0.0f;
-				draw.AddBindable(std::make_shared<Bind::CachingVertexConstantBufferEx>(gfx, buf, 1u));
-			}
-
 			// TODO: better sub-layout generation tech for future consideration maybe
 			draw.AddBindable(InputLayout::Resolve(gfx, vtxLayout, pvsbc));
 
