@@ -21,13 +21,6 @@ namespace Bind
 		if (blending)
 		{
 			brt.BlendEnable = TRUE;
-			//brt.SrcBlend = D3D11_BLEND_SRC_ALPHA;
-			//brt.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-			//brt.BlendOp = D3D11_BLEND_OP_ADD;
-			//brt.SrcBlendAlpha = D3D11_BLEND_ZERO;
-			//brt.DestBlendAlpha = D3D11_BLEND_ZERO;
-			//brt.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-			//brt.RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
 			if (factors_in)
 			{
 				brt.SrcBlend = D3D11_BLEND_BLEND_FACTOR;

@@ -1,9 +1,9 @@
 #pragma once
 #include "Graphics.h"
-#include "BindableCommon.h"
 #include <vector>
-#include <filesystem>
 #include "Technique.h"
+#include <filesystem>
+#include "Vertex.h"
 
 struct aiMaterial;
 struct aiMesh;
@@ -13,6 +13,12 @@ enum MaterialToUse {
 	phong,
 	solid
 };
+
+namespace Bind
+{
+	class VertexBuffer;
+	class IndexBuffer;
+}
 
 class Material
 {

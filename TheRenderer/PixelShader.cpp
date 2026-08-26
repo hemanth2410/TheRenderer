@@ -1,7 +1,7 @@
 #include "PixelShader.h"
 #include "GraphicsThrowMacros.h"
 #include "BindableCodex.h"
-
+#include "ChiliUtil.h"
 namespace Bind
 {
 	PixelShader::PixelShader(Graphics& gfx, const std::string& path)
@@ -17,7 +17,8 @@ namespace Bind
 
 	void PixelShader::Bind(Graphics& gfx) noexcept
 	{
-		GetContext(gfx)->PSSetShader(pPixelShader.Get(), nullptr, 0u);
+		INFOMAN_NOHR(gfx);
+		GFX_THROW_INFO_ONLY(GetContext(gfx)->PSSetShader(pPixelShader.Get(), nullptr, 0u));
 	}
 	std::shared_ptr<PixelShader> PixelShader::Resolve(Graphics& gfx, const std::string& path)
 	{

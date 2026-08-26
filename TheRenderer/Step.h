@@ -3,37 +3,32 @@
 #include <memory>
 #include "Bindable.h"
 #include "Graphics.h"
-#include "TechniqueProbe.h"
+
+class TechniqueProbe;
+class Drawable;
+
+namespace Rgph
+{
+	class RenderQueuePass;
+	class RenderGraph;
+}
 
 class Step
 {
 public:
-	Step(size_t targetPass_in)
-		:
-		targetPass{ targetPass_in }
-	{}
-	void AddBindable(std::shared_ptr<Bind::Bindable> bind_in) noexcept
-	{
-		bindables.push_back(std::move(bind_in));
-	}
-	void Submit(class FrameCommander& frame, const class Drawable& drawable) const;
-	void Bind(Graphics& gfx) const
-	{
-		for (const auto& b : bindables)
-		{
-			b->Bind(gfx);
-		}
-	}
-	void InitializeParentReferences(const class Drawable& parent) noexcept;
-	void Accept(TechniqueProbe& probe)
-	{
-		probe.SetStep(this);
-		for (auto& pb : bindables)
-		{
-			pb->Accept(probe);
-		}
-	}
+	Step(std::string targetPassName);
+	Step(Step&&) = default;
+	Step(const Step& src) noexcept;
+	Step& operator=(const Step&) = delete;
+	Step& operator=(Step&&) = delete;
+	void AddBindable(std::shared_ptr<Bind::Bindable> bind_in) noexcept;
+	void Submit(const Drawable& drawable) const;
+	void Bind(Graphics& gfx) const noxnd;
+	void InitializeParentReferences(const Drawable& parent) noexcept;
+	void Accept(TechniqueProbe& probe);
+	void Link(Rgph::RenderGraph& rg);
 private:
-	size_t targetPass;
 	std::vector<std::shared_ptr<Bind::Bindable>> bindables;
+	Rgph::RenderQueuePass* pTargetPass = nullptr;
+	std::string targetPassName;
 };

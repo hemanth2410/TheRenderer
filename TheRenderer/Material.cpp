@@ -1,6 +1,10 @@
 #include "Material.h"
+#include "BindableCommon.h"
 #include "DynamicConstant.h"
 #include "ConstantBuffersEx.h"
+//#include "TransformCbufScaling.h"
+#include "Stencil.h"
+#include <filesystem>
 
 
 void Material::SetMaterialToUse(MaterialToUse _InShader)
@@ -29,7 +33,7 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 	bool hasGlossAlpha = false;
 	bool hasNormalMap = false;
 	aiString texFileName;
-	Step step(0);
+	Step step("lambertian");
 	std::string shaderCode = "";
 	Dcb::RawLayout pscLayout;
 
@@ -265,7 +269,7 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 	{
 		Technique outline("Outline", false);
 		{
-			Step mask(1);
+			Step mask("outlineMask");
 
 			auto pvs = VertexShader::Resolve(gfx, "SolidVS.cso");
 			auto pvsbc = pvs->GetBytecode();
@@ -281,7 +285,7 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 			outline.AddStep(std::move(mask));
 		}
 		{
-			Step draw(2);
+			Step draw("outlineDraw");
 
 			// these can be pass-constant (tricky due to layout issues)
 			auto pvs = VertexShader::Resolve(gfx, "SolidVS.cso");

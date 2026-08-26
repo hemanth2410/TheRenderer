@@ -4,14 +4,22 @@
 #include "ConstantBuffers.h"
 #include "ConditionalNoexcept.h"
 #include "Transform.h"
+
+namespace Rgph
+{
+	class RenderGraph;
+}
+
+
 class PointLight
 {
 public:
 	PointLight(Graphics& gfx, float radius = 0.5f);
 	void SpawnControlWindow() noexcept;
 	void Reset() noexcept;
-	void Submit(class FrameCommander& frame) const noxnd;
+	void Submit() const noxnd;
 	void Bind(Graphics& gfx, DirectX::FXMMATRIX view) const noexcept;
+	void LinkTechniques(Rgph::RenderGraph&);
 private:
 	struct PointLightCBuf
 	{

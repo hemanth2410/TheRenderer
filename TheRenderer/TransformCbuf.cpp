@@ -10,13 +10,19 @@ namespace Bind
 		}
 	}
 
-	void TransformCbuf::Bind(Graphics& gfx) noexcept
+	void TransformCbuf::Bind(Graphics& gfx) noxnd
 	{
-		UpdateBindImpl(gfx, GetTransforms(gfx));
+		INFOMAN_NOHR(gfx);
+		GFX_THROW_INFO_ONLY(UpdateBindImpl(gfx, GetTransforms(gfx)));
 	}
 	void TransformCbuf::InitializeParentReference(const Drawable& parent) noexcept
 	{
 		pParent = &parent;
+	}
+
+	std::unique_ptr<CloningBindable> TransformCbuf::Clone() const noexcept
+	{
+		return std::make_unique<TransformCbuf>(*this);
 	}
 
 	void TransformCbuf::UpdateBindImpl(Graphics& gfx, const Transforms& tf) noexcept
