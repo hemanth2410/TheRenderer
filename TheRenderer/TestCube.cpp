@@ -30,9 +30,8 @@ TestCube::TestCube(Graphics& gfx, float size)
 			only.AddBindable(Sampler::Resolve(gfx));
 
 			auto pvs = VertexShader::Resolve(gfx, "PhongShadingVS.cso");
-			auto pvsbc = pvs->GetBytecode();
+			only.AddBindable(InputLayout::Resolve(gfx, model.vertices.GetLayout(), *pvs));
 			only.AddBindable(std::move(pvs));
-
 			only.AddBindable(PixelShader::Resolve(gfx, "PhongShadingPS.cso"));
 
 			Dcb::RawLayout lay;
@@ -44,8 +43,6 @@ TestCube::TestCube(Graphics& gfx, float size)
 			buf["specularWeight"] = 0.1f;
 			buf["specularGloss"] = 20.0f;
 			only.AddBindable(std::make_shared<Bind::CachingPixelConstantBufferEx>(gfx, buf, 1u));
-
-			only.AddBindable(InputLayout::Resolve(gfx, model.vertices.GetLayout(), pvsbc));
 
 			only.AddBindable(Rasterizer::Resolve(gfx, false));
 
@@ -62,7 +59,7 @@ TestCube::TestCube(Graphics& gfx, float size)
 			Step mask("outlineMask");
 
 			// TODO: better sub-layout generation tech for future consideration maybe
-			mask.AddBindable(InputLayout::Resolve(gfx, model.vertices.GetLayout(), VertexShader::Resolve(gfx, "SolidVS.cso")->GetBytecode()));
+			mask.AddBindable(InputLayout::Resolve(gfx, model.vertices.GetLayout(), *VertexShader::Resolve(gfx, "SolidVS.cso")));
 
 			mask.AddBindable(std::move(tcb));
 
@@ -80,7 +77,7 @@ TestCube::TestCube(Graphics& gfx, float size)
 			draw.AddBindable(std::make_shared<Bind::CachingPixelConstantBufferEx>(gfx, buf, 1u));
 
 			// TODO: better sub-layout generation tech for future consideration maybe
-			draw.AddBindable(InputLayout::Resolve(gfx, model.vertices.GetLayout(), VertexShader::Resolve(gfx, "SolidVS.cso")->GetBytecode()));
+			draw.AddBindable(InputLayout::Resolve(gfx, model.vertices.GetLayout(), *VertexShader::Resolve(gfx, "SolidVS.cso")));
 
 			draw.AddBindable(std::make_shared<TransformCbuf>(gfx));
 

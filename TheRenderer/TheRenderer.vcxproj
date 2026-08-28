@@ -156,6 +156,8 @@
     <ClCompile Include="BlurOutlineRenderGraph.cpp" />
     <ClCompile Include="BufferClearPass.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CameraContainer.cpp" />
+    <ClCompile Include="CameraIndicator.cpp" />
     <ClCompile Include="ChiliException.cpp" />
     <ClCompile Include="ChiliUtil.cpp" />
     <ClCompile Include="ChiliXM.cpp" />
@@ -164,6 +166,7 @@
     <ClCompile Include="dxerr.cpp" />
     <ClCompile Include="DxgiInfoManager.cpp" />
     <ClCompile Include="DynamicConstant.cpp" />
+    <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="FullScreenPass.cpp" />
     <ClCompile Include="GeometryMath.h" />
     <ClCompile Include="Graphics.cpp" />
@@ -193,6 +196,7 @@
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="PixelShader.cpp" />
     <ClCompile Include="PointLight.cpp" />
+    <ClCompile Include="Projection.cpp" />
     <ClCompile Include="Rasterizer.cpp" />
     <ClCompile Include="RenderGraph.cpp" />
     <ClCompile Include="RenderGraphCompileException.cpp" />
@@ -241,6 +245,8 @@
     <ClInclude Include="BufferClearPass.h" />
     <ClInclude Include="BufferResource.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CameraContainer.h" />
+    <ClInclude Include="CameraIndicator.h" />
     <ClInclude Include="ChiliException.h" />
     <ClInclude Include="ChiliUtil.h" />
     <ClInclude Include="ChiliXM.h" />
@@ -255,6 +261,7 @@
     <ClInclude Include="DxgiInfoManager.h" />
     <ClInclude Include="DynamicConstant.h" />
     <ClInclude Include="FrameCommander.h" />
+    <ClInclude Include="Frustum.h" />
     <ClInclude Include="FullScreenPass.h" />
     <ClInclude Include="GameCoordinates.h" />
     <ClInclude Include="Graphics.h" />
@@ -294,6 +301,7 @@
     <ClInclude Include="PixelShader.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="PointLight.h" />
+    <ClInclude Include="Projection.h" />
     <ClInclude Include="Rasterizer.h" />
     <ClInclude Include="RenderGraph.h" />
     <ClInclude Include="RenderGraphCompileException.h" />
@@ -330,6 +338,7 @@
     <ClInclude Include="Window.h" />
     <ClInclude Include="WindowsMessageMap.h" />
     <ClInclude Include="WindowsThrowMacros.h" />
+    <ClInclude Include="WireframePass.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TheRenderer.rc" />

@@ -134,10 +134,10 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 			step.AddBindable(std::make_shared<TransformCbuf>(gfx, 0u));
 			step.AddBindable(Blender::Resolve(gfx, false));
 			auto pvs = VertexShader::Resolve(gfx, "PhongShadingVS_NRML.cso");
-			auto pvsbc = pvs->GetBytecode();
+			step.AddBindable(InputLayout::Resolve(gfx, vtxLayout, *pvs));
 			step.AddBindable(std::move(pvs));
 			step.AddBindable(PixelShader::Resolve(gfx, hasAlpha ? "PBR_Metal_Roughness_AlphaMask.cso" : "PBR_Metal_Roughness.cso"));
-			step.AddBindable(InputLayout::Resolve(gfx, vtxLayout, pvsbc));
+
 			if (hasTexture)
 			{
 				step.AddBindable(Bind::Sampler::Resolve(gfx));
@@ -221,10 +221,9 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 			step.AddBindable(std::make_shared<TransformCbuf>(gfx, 0u));
 			step.AddBindable(Blender::Resolve(gfx, false));
 			auto pvs = VertexShader::Resolve(gfx, "PhongShadingVS_NRML.cso");
-			auto pvsbc = pvs->GetBytecode();
+			step.AddBindable(InputLayout::Resolve(gfx, vtxLayout, *pvs));
 			step.AddBindable(std::move(pvs));
 			step.AddBindable(PixelShader::Resolve(gfx, "PhongShadingNS_PS.cso"));
-			step.AddBindable(InputLayout::Resolve(gfx, vtxLayout, pvsbc));
 			if (hasTexture)
 			{
 				step.AddBindable(Bind::Sampler::Resolve(gfx));
@@ -272,11 +271,11 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 			Step mask("outlineMask");
 
 			auto pvs = VertexShader::Resolve(gfx, "SolidVS.cso");
-			auto pvsbc = pvs->GetBytecode();
+			mask.AddBindable(InputLayout::Resolve(gfx, vtxLayout, *pvs));
 			mask.AddBindable(std::move(pvs));
 
 			// TODO: better sub-layout generation tech for future consideration maybe
-			mask.AddBindable(InputLayout::Resolve(gfx, vtxLayout, pvsbc));
+
 
 			mask.AddBindable(std::make_shared<TransformCbuf>(gfx));
 
@@ -289,7 +288,7 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 
 			// these can be pass-constant (tricky due to layout issues)
 			auto pvs = VertexShader::Resolve(gfx, "SolidVS.cso");
-			auto pvsbc = pvs->GetBytecode();
+			draw.AddBindable(InputLayout::Resolve(gfx, vtxLayout, *pvs));
 			draw.AddBindable(std::move(pvs));
 
 			// this can be pass-constant
@@ -303,7 +302,7 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 				draw.AddBindable(std::make_shared<Bind::CachingPixelConstantBufferEx>(gfx, buf, 1u));
 			}
 			// TODO: better sub-layout generation tech for future consideration maybe
-			draw.AddBindable(InputLayout::Resolve(gfx, vtxLayout, pvsbc));
+
 
 
 

@@ -306,6 +306,18 @@
     <ClCompile Include="VerticalBlurPass.cpp">
       <Filter>Source Files\Passes</Filter>
     </ClCompile>
+    <ClCompile Include="CameraContainer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Projection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraIndicator.cpp">
+      <Filter>Source Files\Drawables</Filter>
+    </ClCompile>
+    <ClCompile Include="Frustum.cpp">
+      <Filter>Source Files\Drawables</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WindowsMessageMap.h">
@@ -606,6 +618,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VerticalBlurPass.h">
+      <Filter>Header Files\PassLib</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraContainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Projection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraIndicator.h">
+      <Filter>Header Files\Drawables</Filter>
+    </ClInclude>
+    <ClInclude Include="Frustum.h">
+      <Filter>Header Files\Drawables</Filter>
+    </ClInclude>
+    <ClInclude Include="WireframePass.h">
       <Filter>Header Files\PassLib</Filter>
     </ClInclude>
   </ItemGroup>
