@@ -5,6 +5,7 @@
 #include "imgui/imgui.h"
 #include "DynamicConstant.h"
 #include "TechniqueProbe.h"
+#include "Channels.h"
 
 TestCube::TestCube(Graphics& gfx, float size)
 {
@@ -22,23 +23,26 @@ TestCube::TestCube(Graphics& gfx, float size)
 	auto tcb = std::make_shared<TransformCbuf>(gfx);
 
 	{
-		Technique shade("Shade");
+		Technique shade("Shade",Chan::main);
 		{
 			Step only("lambertian");
 
-			only.AddBindable(Texture::Resolve(gfx, "Images\\Trollface.png"));
+			only.AddBindable(Texture::Resolve(gfx, "Images\\Cricket.jpg",0));
 			only.AddBindable(Sampler::Resolve(gfx));
 
+			//auto pvs = VertexShader::Resolve(gfx, "PhongShadingVS.cso");
 			auto pvs = VertexShader::Resolve(gfx, "PhongShadingVS.cso");
 			only.AddBindable(InputLayout::Resolve(gfx, model.vertices.GetLayout(), *pvs));
 			only.AddBindable(std::move(pvs));
 			only.AddBindable(PixelShader::Resolve(gfx, "PhongShadingPS.cso"));
 
 			Dcb::RawLayout lay;
+			lay.Add<Dcb::Float3>("materialColor");
 			lay.Add<Dcb::Float3>("specularColor");
 			lay.Add<Dcb::Float>("specularWeight");
 			lay.Add<Dcb::Float>("specularGloss");
 			auto buf = Dcb::Buffer(std::move(lay));
+			buf["materialColor"] = dx::XMFLOAT3{ 1.0f,1.0f,1.0f };
 			buf["specularColor"] = dx::XMFLOAT3{ 1.0f,1.0f,1.0f };
 			buf["specularWeight"] = 0.1f;
 			buf["specularGloss"] = 20.0f;
@@ -54,7 +58,7 @@ TestCube::TestCube(Graphics& gfx, float size)
 	}
 
 	{
-		Technique outline("Outline");
+		Technique outline("Outline",Chan::main);
 		{
 			Step mask("outlineMask");
 
@@ -78,7 +82,6 @@ TestCube::TestCube(Graphics& gfx, float size)
 
 			// TODO: better sub-layout generation tech for future consideration maybe
 			draw.AddBindable(InputLayout::Resolve(gfx, model.vertices.GetLayout(), *VertexShader::Resolve(gfx, "SolidVS.cso")));
-
 			draw.AddBindable(std::make_shared<TransformCbuf>(gfx));
 
 			// TODO: might need to specify rasterizer when doubled-sided models start being used
@@ -86,6 +89,23 @@ TestCube::TestCube(Graphics& gfx, float size)
 			outline.AddStep(std::move(draw));
 		}
 		AddTechnique(std::move(outline));
+	}
+	{
+		Technique map{ "ShadowMap", Chan::shadow, true };
+		{
+			Step draw("shadowMap");
+
+			// TODO: better sub-layout generation tech for future consideration maybe
+			draw.AddBindable(InputLayout::Resolve(gfx, model.vertices.GetLayout(), *VertexShader::Resolve(gfx, "SolidVS.cso")));
+
+			//draw.AddBindable(std::make_shared<TransformCbuf>(gfx));
+			draw.AddBindable(std::make_shared<TransformCbuf>(gfx)); // why is your pointer to parent always null bro
+			// TODO: might need to specify rasterizer when doubled-sided models start being used
+
+			map.AddStep(std::move(draw));
+		}
+		//techniques.push_back(std::move(map)); -> seriously how high was i to do this BS "techniques.push_back instead of AddTechniques"
+		AddTechnique(std::move(map));
 	}
 }
 

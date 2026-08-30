@@ -13,19 +13,22 @@ namespace Rgph
 class Camera
 {
 public:
-	Camera(Graphics& gfx, std::string name, Vector3 homePos = { 0,0,0 }, Vector3 EulerRotation = { 0,0,0 }) noexcept;
+	Camera(Graphics& gfx, std::string name, Vector3 homePos = { 0,0,0 }, Vector3 EulerRotation = { 0,0,0 }, bool tethered = false) noexcept;
 	void BindToGraphics(Graphics& gfx) const;
 	DirectX::XMMATRIX GetMatrix() const noexcept;
+	DirectX::XMMATRIX GetProjection() const noexcept;
 	void SpawnControlWidgets(Graphics& gfx) noexcept;
 	void Reset(Graphics& gfx) noexcept;
 	void Rotate(float dx, float dy, float deltaTime) noexcept;
 	void Translate(Vector3 translation, float deltaTime) noexcept;
 	void SetPosition(Vector3 position) noexcept;
-	DirectX::XMFLOAT3 GetPos() noexcept;
+	//DirectX::XMFLOAT3 GetPos() noexcept;
+	DirectX::XMFLOAT3 GetPos() const noexcept;
 	const std::string& GetName() const noexcept;
 	void LinkTechniques(Rgph::RenderGraph& rg);
-	void Submit() const;
+	void Submit(size_t channelFilter) const;
 private:
+	bool tethered;
 	std::string name;
 	Transform transform;
 	Vector3 homePos;
@@ -38,6 +41,6 @@ private:
 	float rotationSpeed_Rad;
 	Projection proj;
 	CameraIndicator indicator;
-	bool enableCameraGizmo = true;
-	bool enableProjectionGizmo = true;
+	bool enableCameraGizmo = false;
+	bool enableProjectionGizmo = false;
 };

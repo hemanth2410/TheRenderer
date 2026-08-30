@@ -18,7 +18,7 @@ namespace Rgph
 		binds.push_back(std::move(bind));
 	}
 
-	void BindingPass::BindAll(Graphics& gfx) const noexcept
+	void BindingPass::BindAll(Graphics& gfx) const noxnd
 	{
 		BindBufferResources(gfx);
 		for (auto& bind : binds)
@@ -38,6 +38,10 @@ namespace Rgph
 
 	void BindingPass::BindBufferResources(Graphics& gfx) const noxnd
 	{
+		//if (depthStencil)
+		//{
+		//	depthStencil->Unbind(gfx); // clear stale PS SRV binding before rebinding as DSV
+		//}
 		if (renderTarget)
 		{
 			renderTarget->BindAsBuffer(gfx, depthStencil.get());

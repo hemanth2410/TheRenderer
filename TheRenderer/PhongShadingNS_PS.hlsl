@@ -21,12 +21,12 @@ cbuffer ObjectCBuf
     int ormMap;
 };
 
-cbuffer TransformCbuf
-{
-    matrix modelView;
-    matrix modelviewProj;
-    matrix normalMatrix;
-};
+//cbuffer TransformCbuf
+//{
+//    matrix modelView;
+//    matrix modelviewProj;
+//    matrix normalMatrix;
+//};
 
 Texture2D tex;
 Texture2D spec : register(t1);

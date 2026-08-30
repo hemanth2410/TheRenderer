@@ -5,6 +5,7 @@
 //#include "TransformCbufScaling.h"
 #include "Stencil.h"
 #include <filesystem>
+#include "Channels.h"
 
 
 void Material::SetMaterialToUse(MaterialToUse _InShader)
@@ -49,12 +50,12 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 	{
 		materialToUse = MaterialToUse::phong;
 	}
-	else 
+	else
 	{
 		// -> This has none may be fall back to solid??? 
 	}
-	Technique phongShading{ "Phong" };
-	Technique PBR{ "PBR_Metal_Roughness" };
+	Technique phongShading{ "Phong",Chan::main };
+	Technique PBR{ "PBR_Metal_Roughness", Chan::main };
 	switch (materialToUse)
 	{
 	case PBR_Metallic_Roughness:
@@ -69,7 +70,7 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 		pscLayout.Add<Dcb::Float>("roughnessFactor");
 		pscLayout.Add<Dcb::Float>("ambientFactor");
 		pscLayout.Add<Dcb::Bool>("ormMap");
-		
+
 		// common (pre)
 		vtxLayout.Append(Dvtx::VertexLayout::Position3D);
 		vtxLayout.Append(Dvtx::VertexLayout::Normal);
@@ -81,7 +82,7 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 				hasTexture = true;
 				shaderCode += "Dif";
 				vtxLayout.Append(Dvtx::VertexLayout::Texture2D);
-				auto tex = Texture::Resolve(gfx, rootPath + texFileName.C_Str());
+				auto tex = Texture::Resolve(gfx, rootPath + texFileName.C_Str(),0);
 				if (tex->HasAlpha())
 				{
 					hasAlpha = true;
@@ -121,7 +122,7 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 				step.AddBindable(Texture::Resolve(gfx, rootPath + texFileName.C_Str(), 2));
 				//pscLayout.Add<Dcb::Bool>("useNormalMap");
 			}
-			else 
+			else
 			{
 				vtxLayout.Append(Dvtx::VertexLayout::Texture2D);
 			}
@@ -159,104 +160,104 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 		techniques.push_back(std::move(PBR));
 		break;
 	case phong:
-		shaderCode = "Phong";
-		// common (pre)
-		vtxLayout.Append(Dvtx::VertexLayout::Position3D);
-		vtxLayout.Append(Dvtx::VertexLayout::Normal);
-		// diffuse
-		{
-			bool hasAlpha = false;
-			if (material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName) == aiReturn_SUCCESS)
-			{
-				hasTexture = true;
-				shaderCode += "Dif";
-				vtxLayout.Append(Dvtx::VertexLayout::Texture2D);
-				auto tex = Texture::Resolve(gfx, rootPath + texFileName.C_Str());
-				if (tex->HasAlpha())
-				{
-					hasAlpha = true;
-					shaderCode += "Msk";
-				}
-				step.AddBindable(std::move(tex));
-			}
-			else
-			{
-				pscLayout.Add<Dcb::Float3>("materialColor");
-			}
-			step.AddBindable(Rasterizer::Resolve(gfx, hasAlpha));
-		}
-		// specular
-		{
-			if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS)
-			{
-				hasTexture = true;
-				shaderCode += "Spc";
-				vtxLayout.Append(Dvtx::VertexLayout::Texture2D);
-				auto tex = Texture::Resolve(gfx, rootPath + texFileName.C_Str(), 1);
-				hasGlossAlpha = tex->HasAlpha();
-				step.AddBindable(std::move(tex));
-				pscLayout.Add<Dcb::Bool>("useGlossAlpha");
-				pscLayout.Add<Dcb::Bool>("useSpecularMap");
-			}
-			pscLayout.Add<Dcb::Float3>("specularColor");
-			pscLayout.Add<Dcb::Float>("specularWeight");
-			pscLayout.Add<Dcb::Float>("specularGloss");
-		}
-		// normal
-		{
-			if (material.GetTexture(aiTextureType_NORMALS, 0, &texFileName) == aiReturn_SUCCESS)
-			{
-				hasTexture = true;
-				shaderCode += "Nrm";
-				vtxLayout.Append(Dvtx::VertexLayout::Texture2D);
-				vtxLayout.Append(Dvtx::VertexLayout::Tangent);
-				vtxLayout.Append(Dvtx::VertexLayout::Bitangent);
-				step.AddBindable(Texture::Resolve(gfx, rootPath + texFileName.C_Str(), 2));
-				pscLayout.Add<Dcb::Bool>("useNormalMap");
-				pscLayout.Add<Dcb::Float>("normalMapWeight");
-			}
-		}
-		// common (post)
-		{
-			step.AddBindable(std::make_shared<TransformCbuf>(gfx, 0u));
-			step.AddBindable(Blender::Resolve(gfx, false));
-			auto pvs = VertexShader::Resolve(gfx, "PhongShadingVS_NRML.cso");
-			step.AddBindable(InputLayout::Resolve(gfx, vtxLayout, *pvs));
-			step.AddBindable(std::move(pvs));
-			step.AddBindable(PixelShader::Resolve(gfx, "PhongShadingNS_PS.cso"));
-			if (hasTexture)
-			{
-				step.AddBindable(Bind::Sampler::Resolve(gfx));
-			}
-			// PS material params (cbuf)
-			Dcb::Buffer buf{ std::move(pscLayout) };
-			if (auto r = buf["materialColor"]; r.Exists())
-			{
-				aiColor3D color = { 0.45f,0.45f,0.85f };
-				material.Get(AI_MATKEY_COLOR_DIFFUSE, color);
-				r = reinterpret_cast<DirectX::XMFLOAT3&>(color);
-			}
-			buf["useGlossAlpha"].SetIfExists(hasGlossAlpha);
-			buf["useSpecularMap"].SetIfExists(true);
-			if (auto r = buf["specularColor"]; r.Exists())
-			{
-				aiColor3D color = { 0.18f,0.18f,0.18f };
-				material.Get(AI_MATKEY_COLOR_SPECULAR, color);
-				r = reinterpret_cast<DirectX::XMFLOAT3&>(color);
-			}
-			buf["specularWeight"].SetIfExists(1.0f);
-			if (auto r = buf["specularGloss"]; r.Exists())
-			{
-				float gloss = 8.0f;
-				material.Get(AI_MATKEY_SHININESS, gloss);
-				r = gloss;
-			}
-			buf["useNormalMap"].SetIfExists(true);
-			buf["normalMapWeight"].SetIfExists(1.0f);
-			step.AddBindable(std::make_unique<Bind::CachingPixelConstantBufferEx>(gfx, std::move(buf), 1u));
-		}
-		phongShading.AddStep(std::move(step));
-		techniques.push_back(std::move(phongShading));
+		//shaderCode = "Phong";
+		//// common (pre)
+		//vtxLayout.Append(Dvtx::VertexLayout::Position3D);
+		//vtxLayout.Append(Dvtx::VertexLayout::Normal);
+		//// diffuse
+		//{
+		//	bool hasAlpha = false;
+		//	if (material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName) == aiReturn_SUCCESS)
+		//	{
+		//		hasTexture = true;
+		//		shaderCode += "Dif";
+		//		vtxLayout.Append(Dvtx::VertexLayout::Texture2D);
+		//		auto tex = Texture::Resolve(gfx, rootPath + texFileName.C_Str());
+		//		if (tex->HasAlpha())
+		//		{
+		//			hasAlpha = true;
+		//			shaderCode += "Msk";
+		//		}
+		//		step.AddBindable(std::move(tex));
+		//	}
+		//	else
+		//	{
+		//		pscLayout.Add<Dcb::Float3>("materialColor");
+		//	}
+		//	step.AddBindable(Rasterizer::Resolve(gfx, hasAlpha));
+		//}
+		//// specular
+		//{
+		//	if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS)
+		//	{
+		//		hasTexture = true;
+		//		shaderCode += "Spc";
+		//		vtxLayout.Append(Dvtx::VertexLayout::Texture2D);
+		//		auto tex = Texture::Resolve(gfx, rootPath + texFileName.C_Str(), 1);
+		//		hasGlossAlpha = tex->HasAlpha();
+		//		step.AddBindable(std::move(tex));
+		//		pscLayout.Add<Dcb::Bool>("useGlossAlpha");
+		//		pscLayout.Add<Dcb::Bool>("useSpecularMap");
+		//	}
+		//	pscLayout.Add<Dcb::Float3>("specularColor");
+		//	pscLayout.Add<Dcb::Float>("specularWeight");
+		//	pscLayout.Add<Dcb::Float>("specularGloss");
+		//}
+		//// normal
+		//{
+		//	if (material.GetTexture(aiTextureType_NORMALS, 0, &texFileName) == aiReturn_SUCCESS)
+		//	{
+		//		hasTexture = true;
+		//		shaderCode += "Nrm";
+		//		vtxLayout.Append(Dvtx::VertexLayout::Texture2D);
+		//		vtxLayout.Append(Dvtx::VertexLayout::Tangent);
+		//		vtxLayout.Append(Dvtx::VertexLayout::Bitangent);
+		//		step.AddBindable(Texture::Resolve(gfx, rootPath + texFileName.C_Str(), 2));
+		//		pscLayout.Add<Dcb::Bool>("useNormalMap");
+		//		pscLayout.Add<Dcb::Float>("normalMapWeight");
+		//	}
+		//}
+		//// common (post)
+		//{
+		//	step.AddBindable(std::make_shared<TransformCbuf>(gfx, 0u));
+		//	step.AddBindable(Blender::Resolve(gfx, false));
+		//	auto pvs = VertexShader::Resolve(gfx, "PhongShadingVS_NRML.cso");
+		//	step.AddBindable(InputLayout::Resolve(gfx, vtxLayout, *pvs));
+		//	step.AddBindable(std::move(pvs));
+		//	step.AddBindable(PixelShader::Resolve(gfx, "PhongShadingNS_PS.cso"));
+		//	if (hasTexture)
+		//	{
+		//		step.AddBindable(Bind::Sampler::Resolve(gfx));
+		//	}
+		//	// PS material params (cbuf)
+		//	Dcb::Buffer buf{ std::move(pscLayout) };
+		//	if (auto r = buf["materialColor"]; r.Exists())
+		//	{
+		//		aiColor3D color = { 0.45f,0.45f,0.85f };
+		//		material.Get(AI_MATKEY_COLOR_DIFFUSE, color);
+		//		r = reinterpret_cast<DirectX::XMFLOAT3&>(color);
+		//	}
+		//	buf["useGlossAlpha"].SetIfExists(hasGlossAlpha);
+		//	buf["useSpecularMap"].SetIfExists(true);
+		//	if (auto r = buf["specularColor"]; r.Exists())
+		//	{
+		//		aiColor3D color = { 0.18f,0.18f,0.18f };
+		//		material.Get(AI_MATKEY_COLOR_SPECULAR, color);
+		//		r = reinterpret_cast<DirectX::XMFLOAT3&>(color);
+		//	}
+		//	buf["specularWeight"].SetIfExists(1.0f);
+		//	if (auto r = buf["specularGloss"]; r.Exists())
+		//	{
+		//		float gloss = 8.0f;
+		//		material.Get(AI_MATKEY_SHININESS, gloss);
+		//		r = gloss;
+		//	}
+		//	buf["useNormalMap"].SetIfExists(true);
+		//	buf["normalMapWeight"].SetIfExists(1.0f);
+		//	step.AddBindable(std::make_unique<Bind::CachingPixelConstantBufferEx>(gfx, std::move(buf), 1u));
+		//}
+		//phongShading.AddStep(std::move(step));
+		//techniques.push_back(std::move(phongShading));
 		break;
 	case solid:
 		break;
@@ -266,7 +267,7 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 
 	// outline technique
 	{
-		Technique outline("Outline", false);
+		Technique outline("Outline", Chan::main, false);
 		{
 			Step mask("outlineMask");
 
@@ -315,7 +316,20 @@ materialToUse(MaterialToUse::PBR_Metallic_Roughness)
 		}
 		techniques.push_back(std::move(outline));
 	}
+	{
+		Technique map{ "ShadowMap", Chan::shadow, true };
+		{
+			Step draw("shadowMap");
+
+			draw.AddBindable(InputLayout::Resolve(gfx, vtxLayout, *VertexShader::Resolve(gfx, "SolidVS.cso")));
+			draw.AddBindable(std::make_shared<TransformCbuf>(gfx));
+			map.AddStep(std::move(draw));
+		}
+		techniques.push_back(std::move(map));
+	}
+	
 }
+
 Dvtx::VertexBuffer Material::ExtractVertices(const aiMesh& mesh) const noexcept
 {
 	return { vtxLayout,mesh };

@@ -1,6 +1,7 @@
 #include "PointLight.h"
 #include "imgui/imgui.h"
 #include "GameCoordinates.h"
+#include "Camera.h"
 
 PointLight::PointLight(Graphics& gfx, float radius)
 	:
@@ -8,17 +9,25 @@ PointLight::PointLight(Graphics& gfx, float radius)
 	cbuf(gfx)
 {
 	Reset();
+	Vector3 position = transform.position;
+	Vector3 rotation = { 0,0,0 };
+	pCamera = std::make_shared<Camera>(gfx, "Light", position, rotation, true);
 }
 
 void PointLight::SpawnControlWindow() noexcept
 {
 	if (ImGui::Begin("Light"))
 	{
+		bool dirtyPos = false;
+		const auto d = [&dirtyPos](bool dirty) {dirtyPos = dirtyPos || dirty; };
 		ImGui::Text("Position");
-		ImGui::SliderFloat("X", &transform.position.x, -20.0f, 20.0f, "%.1f");
-		ImGui::SliderFloat("Y", &transform.position.y, -20.0f, 20.0f, "%.1f");
-		ImGui::SliderFloat("Z", &transform.position.z, -20.0f, 20.0f, "%.1f");
-
+		d(ImGui::SliderFloat("X", &transform.position.x, -20.0f, 20.0f, "%.1f"));
+		d(ImGui::SliderFloat("Y", &transform.position.y, -20.0f, 20.0f, "%.1f"));
+		d(ImGui::SliderFloat("Z", &transform.position.z, -20.0f, 20.0f, "%.1f"));
+		if (dirtyPos)
+		{
+			pCamera->SetPosition(transform.position);
+		}
 		ImGui::Text("Intensity/Color");
 		ImGui::SliderFloat("Intensity", &cbData.diffuseIntensity, 0.01f, 5.0f, "%.2f", 2);
 		ImGui::ColorEdit3("Diffuse Color", &cbData.diffuseColor.x);
@@ -54,10 +63,10 @@ void PointLight::Reset() noexcept
 	};
 }
 
-void PointLight::Submit() const noxnd
+void PointLight::Submit(size_t channelFilter) const noxnd
 {
 	mesh.SetPos(cbData.pos);
-	mesh.Submit();
+	mesh.Submit(channelFilter);
 }
 
 void PointLight::Bind(Graphics& gfx, DirectX::FXMMATRIX view) const noexcept
@@ -71,4 +80,10 @@ void PointLight::Bind(Graphics& gfx, DirectX::FXMMATRIX view) const noexcept
 void PointLight::LinkTechniques(Rgph::RenderGraph& rg)
 {
 	mesh.LinkTechniques(rg);
+}
+
+
+std::shared_ptr<Camera> PointLight::ShareCamera() const noexcept
+{
+	return pCamera;
 }

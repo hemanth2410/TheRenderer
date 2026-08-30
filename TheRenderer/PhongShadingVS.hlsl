@@ -1,15 +1,11 @@
-cbuffer CBuf
-{
-    matrix modelView;
-    matrix modelViewProj;
-    matrix normalMatrix; // inverse-transpose of modelView's upper-left 3x3, uploaded from C++
-};
-
+#include "Transform.hlsli"
+#include "VShadows.hlsli"
 struct VSOut
 {
     float3 worldPos : Position;
     float3 normal : Normal;
     float2 tc : Texcoord;
+    float4 shadowHomoPos : ShadowPosition;
     float4 pos : SV_Position;
 };
 
@@ -21,8 +17,9 @@ VSOut main( float3 pos : Position, float3 n : Normal, float2 tc : Texcoord )
     vso.pos = mul(float4(pos, 1.0f), modelViewProj);*/
     vso.worldPos = (float3) mul(float4(pos, 1.0f), modelView);
     //vso.normal = mul(n, (float3x3) transpose(invert(modelView)));
-    vso.normal = mul(n, (float3x3) normalMatrix);
+    vso.normal = mul(n, (float3x3) modelView);
     vso.pos = mul(float4(pos, 1.0f), modelViewProj);
     vso.tc = tc;
+    vso.shadowHomoPos = ToShadowHomoSpace(pos, model);
     return vso;
 }

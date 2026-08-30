@@ -4,7 +4,7 @@
 #include "Vertex.h"
 #include "Sphere.h"
 #include "Stencil.h"
-//#include "Channels.h"
+#include "Channels.h"
 
 namespace dx = DirectX;
 
@@ -46,7 +46,7 @@ Frustum::Frustum(Graphics& gfx, float width, float height, float nearZ, float fa
 
 	{
 		//Technique line{ Chan::main };
-		Technique line;
+		Technique line{Chan::main};
 		{
 			//Step unoccluded("lambertian");
 			Step unoccluded("lambertian");

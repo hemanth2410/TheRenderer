@@ -10,7 +10,7 @@ Vector3 Vector3::FromXmVector(XMVECTOR dxVector) noexcept
 	return(Vector3(x, y, z));
 }
 
-XMFLOAT3 Vector3::ToXmFloat3() noexcept
+XMFLOAT3 Vector3::ToXmFloat3() const noexcept
 {
 	return XMFLOAT3(x, y, z);
 }

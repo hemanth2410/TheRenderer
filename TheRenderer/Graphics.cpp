@@ -122,6 +122,9 @@ void Graphics::BeginFrame(float red, float green, float blue) noexcept
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 	}
+	ID3D11ShaderResourceView* pNullTex = nullptr;
+	pContext->PSSetShaderResources(0, 1, &pNullTex);
+	pContext->PSSetShaderResources(4, 1, &pNullTex);
 }
 
 void Graphics::DrawIndexed(UINT count) noxnd

@@ -1,7 +1,7 @@
 #pragma once
 #include "Bindable.h"
 #include "BufferResource.h"
-
+#include <optional>
 class Graphics;
 class Surface;
 namespace Bind
@@ -18,10 +18,12 @@ namespace Bind
 		void Clear(Graphics& gfx, const std::array<float, 4>& color) noxnd;
 		UINT GetWidth() const noexcept;
 		UINT GetHeight() const noexcept;
+		Surface ToSurface(Graphics& gfx) const;
 	private:
+		std::pair<Microsoft::WRL::ComPtr<ID3D11Texture2D>, D3D11_TEXTURE2D_DESC> MakeStaging(Graphics& gfx) const;
 		void BindAsBuffer(Graphics& gfx, ID3D11DepthStencilView* pDepthStencilView) noxnd;
 	protected:
-		RenderTarget(Graphics& gfx, ID3D11Texture2D* pTexture);
+		RenderTarget(Graphics& gfx, ID3D11Texture2D* pTexture, std::optional<UINT> face);
 		RenderTarget(Graphics& gfx, UINT width, UINT height);
 		UINT width;
 		UINT height;
@@ -45,7 +47,6 @@ namespace Bind
 		friend Graphics;
 	public:
 		void Bind(Graphics& gfx) noxnd override;
-	private:
-		OutputOnlyRenderTarget(Graphics& gfx, ID3D11Texture2D* pTexture);
+		OutputOnlyRenderTarget(Graphics& gfx, ID3D11Texture2D* pTexture, std::optional<UINT> face = {});
 	};
 }

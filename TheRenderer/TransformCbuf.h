@@ -11,8 +11,8 @@ namespace Bind
 		struct Transforms
 		{
 			DirectX::XMMATRIX model;
+			DirectX::XMMATRIX modelView;
 			DirectX::XMMATRIX modelViewProj;
-			DirectX::XMMATRIX normalMatrix;
 		};
 	public:
 		TransformCbuf(Graphics& gfx, UINT slot = 0u);

@@ -14,7 +14,7 @@ public:
 
     Vector3() : x(0.0f), y(0.0f), z(0.0f) {}
     Vector3(float xVal, float yVal, float zVal) : x(xVal), y(yVal), z(zVal) {}
-    XMFLOAT3 ToXmFloat3() noexcept;
+    XMFLOAT3 ToXmFloat3() const noexcept;
     XMVECTOR ToXmVector() noexcept;
     static Vector3 Forward() noexcept {
         return Vector3(0, 0, 1);

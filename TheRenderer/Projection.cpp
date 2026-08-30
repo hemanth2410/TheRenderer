@@ -51,9 +51,9 @@ void Projection::SetRotation(DirectX::XMFLOAT3 rot)
 //{
 //	frust.Submit(channel);
 //}
-void Projection::Submit() const
+void Projection::Submit(size_t channelFilter) const
 {
-	frust.Submit();
+	frust.Submit(channelFilter);
 }
 void Projection::LinkTechniques(Rgph::RenderGraph& rg)
 {

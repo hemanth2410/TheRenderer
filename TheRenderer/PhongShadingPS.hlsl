@@ -1,40 +1,38 @@
-cbuffer LightCBuf
-{
-    float3 lightPos;
-    float3 ambient;
-    float3 diffuseColor;
-    float diffuseIntensity;
-    float attConst;
-    float attLin;
-    float attQuad;
-};
+#include "ShaderOps.hlsli"
+#include "LightVectorData.hlsli"
+#include "PointLight.hlsli"
+#include "PShadows.hlsli"
 
-cbuffer ObjectCBuf
+cbuffer ObjectCBuf : register(b1)
 {
-    //float3 materialColor;
-    float specularIntensity;
-    float specularPower;
-    float padding[2];
+    float3 materialColor;
+    float3 specularColor;
+    float specularWeight;
+    float specularGloss;
 };
-Texture2D tex;
-SamplerState splr;
+Texture2D tex : register(t0);
+SamplerState splr : register(s0);
 
-float4 main(float3 worldPos : Position, float3 n : Normal, float2 tc : Texcoord) : SV_Target
+float4 main(float3 viewFragPos : Position, float3 viewNormal : Normal, float2 tc : Texcoord, float4 spos : ShadowPosition) : SV_Target
 {
-    n = normalize(n);
-	// fragment to light vector data
-    const float3 vToL = lightPos - worldPos;
-    const float distToL = length(vToL);
-    const float3 dirToL = vToL / distToL;
-	// attenuation
-    const float att = 1.0f / (attConst + attLin * distToL + attQuad * (distToL * distToL));
-	// diffuse intensity
-    const float3 diffuse = diffuseColor * diffuseIntensity * att * max(0.0f, dot(dirToL, n));
-	// reflected light vector
-    const float3 w = n * dot(vToL, n);
-    const float3 r = w * 2.0f - vToL;
-	// calculate specular intensity based on angle between viewing vector and reflection vector, narrow with power function
-    const float3 specular = att * (diffuseColor * diffuseIntensity) * specularIntensity * pow(max(0.0f, dot(normalize(-r), normalize(worldPos))), specularPower);
-	// final color
-    return float4(saturate((diffuse + ambient) * tex.Sample(splr, tc).rgb + specular), 1.0f);
+    float3 diffuse;
+    float3 specular;
+    if (Shadow(spos) > 0.5f)
+    {
+        viewNormal = normalize(viewNormal);
+        const LightVectorData lv = CalculateLightVectorData(viewLightPos, viewFragPos);
+        const float att = Attenuate(attConst, attLin, attQuad, lv.distToL);
+        diffuse = Diffuse(diffuseColor, diffuseIntensity, att, lv.dirToL, viewNormal);
+        specular = Speculate(
+        diffuseColor * diffuseIntensity * specularColor, specularWeight, viewNormal,
+        lv.vToL, viewFragPos, att, specularGloss
+        );
+        
+    }
+    else
+    {
+        diffuse = specular = 0.0f;
+    }
+    return float4(saturate((diffuse + ambient) * materialColor * tex.Sample(splr,tc).rgb + specular), 1.0f);
+
 }

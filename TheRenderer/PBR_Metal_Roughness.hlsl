@@ -1,15 +1,9 @@
-cbuffer LightCBuf
-{
-    float3 lightPos;
-    float3 ambient;
-    float3 diffuseColor;
-    float diffuseIntensity;
-    float attConst;
-    float attLin;
-    float attQuad;
-};
+//#include "ShaderOps.hlsli"
+#include "LightVectorData.hlsli"
+#include "PointLight.hlsli"
+#include "PShadows.hlsli"
 
-cbuffer ObjectCBuf
+cbuffer ObjectCBuf : register(b1)
 {
     float specularIntensity; // fallback when !useSpecularMap
     float specularPower; // fallback when !useSpecularMap
@@ -21,18 +15,18 @@ cbuffer ObjectCBuf
     int ormMap;
 };
 
-cbuffer TransformCbuf
-{
-    matrix modelView;
-    matrix modelviewProj;
-    matrix normalMatrix;
-};
+//cbuffer TransformCbuf
+//{
+//    matrix modelView;
+//    matrix modelviewProj;
+//    matrix normalMatrix;
+//};
 
-Texture2D Albedo;
+Texture2D Albedo : register(t0);
 Texture2D spec : register(t1);
 Texture2D NormalMap : register(t2);
 Texture2D ORM : register(t3);
-SamplerState splr;
+SamplerState splr : register(s0);
 
 // Hevy math stuff
 static const float PI = 3.14159265f;
@@ -66,7 +60,7 @@ float3 FresnelSchlick(float cosTheta, float3 F0)
     return F0 + (1.0f - F0) * pow(saturate(1.0f - cosTheta), 5.0f);
 }
 
-float4 main(float3 worldPos : Position, float3 n : Normal, float3 tan : Tangent, float3 bitan : Bitangent, float2 tc : Texcoord) : SV_Target
+float4 main(float3 worldPos : Position, float3 n : Normal, float3 tan : Tangent, float3 bitan : Bitangent, float2 tc : Texcoord, float4 spos : ShadowPosition) : SV_Target
 {
     float4 albedo = Albedo.Sample(splr, tc);
 #ifdef ALPHA_MASK_ENABLED
@@ -94,11 +88,12 @@ float4 main(float3 worldPos : Position, float3 n : Normal, float3 tan : Tangent,
         N = normalize(N);
     }
     float3 V = normalize(-worldPos);
-    float3 L = normalize(lightPos - worldPos);
+    float3 L = normalize(viewLightPos - worldPos);
     float3 H = normalize(V + L);
     float metallic;
     float roughness;
     float ao;
+    float3 outColor;
     if (ormMap)
     {
         metallic = ORM.Sample(splr, tc).b;
@@ -112,7 +107,40 @@ float4 main(float3 worldPos : Position, float3 n : Normal, float3 tan : Tangent,
         roughness = roughnessFactor;
         ao = ambientFactor;
     }
-    const float distToL = length(lightPos - worldPos); // you already compute L = normalize(lightPos - worldPos) above; distToL needs the un-normalized version too
+    
+    // old binary shadow implementation
+    
+    //if(ShadowUnoccluded(spos))
+    //{
+    //    const float distToL = length(viewLightPos - worldPos); // you already compute L = normalize(lightPos - worldPos) above; distToL needs the un-normalized version too
+    //    const float att = 1.0f / (attConst + attLin * distToL + attQuad * (distToL * distToL));
+    
+    //    float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), albedo.rgb, metallic); // dielectrics ~4% reflectance; metals tint by albedo
+    //    float D = DistributionGGX(N, H, roughness);
+    //    float G = GeometrySmith(N, V, L, roughness);
+    //    float3 F = FresnelSchlick(max(dot(H, V), 0.0f), F0);
+    //    float3 numerator = D * G * F;
+    //    float denominator = 4.0f * max(dot(N, V), 0.0f) * max(dot(N, L), 0.0f) + 0.0001f; // epsilon avoids div-by-zero
+    //    float3 specular = numerator / denominator;
+
+    //    float3 kD = (1.0f - F) * (1.0f - metallic);
+    //    float3 diffuse = kD * albedo.rgb / PI;
+
+    //    float NdotL = max(dot(N, L), 0.0f);
+    //    outColor = (diffuse + specular + (ambient * ao)) * diffuseColor * diffuseIntensity * att * NdotL;
+    //}
+    //else
+    //{
+    //    float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), albedo.rgb, metallic); // dielectrics ~4% reflectance; metals tint by albedo
+    //    float3 F = FresnelSchlick(max(dot(H, V), 0.0f), F0);
+    //    float3 kD = (1.0f - F) * (1.0f - metallic);
+    //    float3 diffuse = kD * albedo.rgb / PI;
+    //    outColor = ((ambient * ao) * diffuse);
+
+    //}
+    
+    ////float3 outColor = float3(ao, roughness, metallic);
+    const float distToL = length(viewLightPos - worldPos); // you already compute L = normalize(lightPos - worldPos) above; distToL needs the un-normalized version too
     const float att = 1.0f / (attConst + attLin * distToL + attQuad * (distToL * distToL));
     
     float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), albedo.rgb, metallic); // dielectrics ~4% reflectance; metals tint by albedo
@@ -127,7 +155,7 @@ float4 main(float3 worldPos : Position, float3 n : Normal, float3 tan : Tangent,
     float3 diffuse = kD * albedo.rgb / PI;
 
     float NdotL = max(dot(N, L), 0.0f);
-    float3 outColor = (diffuse + specular + (ambient * ao)) * diffuseColor * diffuseIntensity * att * NdotL;
-    //float3 outColor = float3(ao, roughness, metallic);
+    outColor = lerp(((ambient * ao) * diffuse), (diffuse + specular + (ambient * ao)) * diffuseColor * diffuseIntensity * att * NdotL, Shadow(spos));
+    //outColor = float3(1-Shadow(spos), 0, 0);
     return float4(saturate(outColor), 1.0f);
 }

@@ -192,3 +192,7 @@ const std::string& Surface::Exception::GetNote() const noexcept
 {
 	return note;
 }
+unsigned int Surface::GetBytePitch() const noexcept
+{
+	return (unsigned int)scratch.GetImage(0, 0, 0)->rowPitch;
+}

@@ -12,6 +12,8 @@
 #include "GeometryMath.h"
 #include "imgui/imgui.h"
 #include "WireframePass.h"
+#include "ShadowMappingPass.h"
+#include "SkyboxPass.h"
 
 namespace Rgph
 {
@@ -30,14 +32,25 @@ namespace Rgph
 			AppendPass(std::move(pass));
 		}
 		{
+			auto pass = std::make_unique<ShadowMappingPass>(gfx, "shadowMap");
+			AppendPass(std::move(pass));
+		}
+		{
 			auto pass = std::make_unique<LambertianPass>(gfx, "lambertian");
+			pass->SetSinkLinkage("shadowMap", "shadowMap.map");
 			pass->SetSinkLinkage("renderTarget", "clearRT.buffer");
 			pass->SetSinkLinkage("depthStencil", "clearDS.buffer");
 			AppendPass(std::move(pass));
 		}
 		{
-			auto pass = std::make_unique<OutlineMaskGenerationPass>(gfx, "outlineMask");
+			auto pass = std::make_unique<SkyboxPass>(gfx, "skybox");
+			pass->SetSinkLinkage("renderTarget", "lambertian.renderTarget");
 			pass->SetSinkLinkage("depthStencil", "lambertian.depthStencil");
+			AppendPass(std::move(pass));
+		}
+		{
+			auto pass = std::make_unique<OutlineMaskGenerationPass>(gfx, "outlineMask");
+			pass->SetSinkLinkage("depthStencil", "skybox.depthStencil");
 			AppendPass(std::move(pass));
 		}
 
@@ -75,7 +88,7 @@ namespace Rgph
 		}
 		{
 			auto pass = std::make_unique<VerticalBlurPass>("vertical", gfx);
-			pass->SetSinkLinkage("renderTarget", "lambertian.renderTarget");
+			pass->SetSinkLinkage("renderTarget", "skybox.renderTarget");
 			pass->SetSinkLinkage("depthStencil", "outlineMask.depthStencil");
 			pass->SetSinkLinkage("scratchIn", "horizontal.scratchOut");
 			pass->SetSinkLinkage("kernel", "$.blurKernel");
@@ -127,8 +140,13 @@ namespace Rgph
 		}
 		blurKernel->SetBuffer(k);
 	}
-
-	void BlurOutlineRenderGraph::RenderWidgets(Graphics& gfx)
+	void BlurOutlineRenderGraph::RenderWindows(Graphics& gfx)
+	{
+		//RenderShadowWindow(gfx);
+		RenderKernelWindow(gfx);
+		dynamic_cast<SkyboxPass&>(FindPassByName("skybox")).RenderWindow();
+	}
+	void BlurOutlineRenderGraph::RenderKernelWindow(Graphics& gfx)
 	{
 		if (ImGui::Begin("Kernel"))
 		{
@@ -178,5 +196,20 @@ namespace Rgph
 			}
 		}
 		ImGui::End();
+	}
+	void Rgph::BlurOutlineRenderGraph::BindMainCamera(Camera& mainCamera)
+	{
+		dynamic_cast<LambertianPass&>(FindPassByName("lambertian")).BindMainCamera(mainCamera);
+		dynamic_cast<SkyboxPass&>(FindPassByName("skybox")).BindMainCamera(mainCamera);
+	}
+	void Rgph::BlurOutlineRenderGraph::BindShadowCamera(Camera& shadowCam)
+	{
+		dynamic_cast<ShadowMappingPass&>(FindPassByName("shadowMap")).BindShadowCamera(shadowCam);
+		dynamic_cast<LambertianPass&>(FindPassByName("lambertian")).BindShadowCamera(shadowCam);
+	}
+
+	void Rgph::BlurOutlineRenderGraph::DumpShadowMap(Graphics& gfx, const std::string& path)
+	{
+		dynamic_cast<ShadowMappingPass&>(FindPassByName("shadowMap")).DumpShadowMap(gfx, path);
 	}
 }

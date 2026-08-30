@@ -5,18 +5,25 @@
 #include "Graphics.h"
 namespace dx = DirectX;
 
-Camera::Camera(Graphics& gfx, std::string name, Vector3 homePos, Vector3 homeRotation) noexcept
+Camera::Camera(Graphics& gfx, std::string name, Vector3 homePos, Vector3 homeRotation, bool tethered) noexcept
 	:
 	name(name),
 	homePos(homePos),
 	homeRotation(homeRotation),
 	proj(gfx, 1.0f, 768.0f / 1366.0f, 0.5f, 200),
-	indicator(gfx)
+	indicator(gfx),
+	tethered(tethered)
 {
+	if (tethered)
+	{
+		transform.position = homePos;
+	}
 	Reset(gfx);
 	rotationSpeed_Rad = DirectX::XMConvertToRadians(rotationSpeed_deg);
 	indicator.SetPos(transform.position.ToXmFloat3());
 	indicator.SetRotation(transform.rotation.ToEuler().ToXmFloat3());
+	proj.SetPos(transform.position.ToXmFloat3());
+	proj.SetRotation(transform.rotation.ToEuler().ToXmFloat3());
 }
 
 void Camera::BindToGraphics(Graphics& gfx) const
@@ -42,17 +49,19 @@ void Camera::SpawnControlWidgets(Graphics& gfx) noexcept
 	bool rotationChanged = false;
 	bool posDirty = false;
 	const auto dcheck = [](bool d, bool& carry) {carry = carry || d; };
-	ImGui::Text("Position");
+	if (!tethered)
+	{
+		ImGui::Text("Position");
 
-	ImGui::PushItemWidth(150.0f);
-	ImGui::SameLine();
-	dcheck(ImGui::InputFloat("X", &transform.position.x), posDirty);
-	ImGui::SameLine();
-	dcheck(ImGui::InputFloat("Y", &transform.position.y), posDirty);
-	ImGui::SameLine();
-	dcheck(ImGui::InputFloat("Z", &transform.position.z), posDirty);
-	ImGui::PopItemWidth();
-
+		ImGui::PushItemWidth(150.0f);
+		ImGui::SameLine();
+		dcheck(ImGui::InputFloat("X", &transform.position.x), posDirty);
+		ImGui::SameLine();
+		dcheck(ImGui::InputFloat("Y", &transform.position.y), posDirty);
+		ImGui::SameLine();
+		dcheck(ImGui::InputFloat("Z", &transform.position.z), posDirty);
+		ImGui::PopItemWidth();
+	}
 	ImGui::Text("Rotation");
 	ImGui::PushItemWidth(150.0f);
 	ImGui::SameLine();
@@ -90,12 +99,15 @@ void Camera::SpawnControlWidgets(Graphics& gfx) noexcept
 
 void Camera::Reset(Graphics& gfx) noexcept
 {
-	transform.position = homePos;
+	if (!tethered)
+	{
+		transform.position = homePos;
+		proj.SetPos(transform.position.ToXmFloat3());
+		indicator.SetPos(transform.position.ToXmFloat3());
+	}
 	transform.rotation = Quaternion().FromEuler(to_rad(homeRotation.x), to_rad(homeRotation.y), to_rad(homeRotation.z)); // somehow every time a rotation is set we need to compute local vectors, its default now so local vectors are same as global vectors
 	indicator.SetRotation(transform.rotation.ToEuler().ToXmFloat3());
-	indicator.SetPos(transform.position.ToXmFloat3());
 	proj.SetRotation(transform.rotation.ToEuler().ToXmFloat3());
-	proj.SetPos(transform.position.ToXmFloat3());
 	proj.Reset(gfx);
 }
 
@@ -120,17 +132,21 @@ void Camera::Rotate(float dx, float dy, float deltaTime) noexcept
 
 void Camera::Translate(Vector3 direction, float deltaTime) noexcept
 {
+	if (tethered) return;
 	transform.position += transform.forward * (deltaTime * travelSpeed * direction.z);
 	transform.position += transform.right * (deltaTime * travelSpeed * direction.x);
 	transform.position += transform.up * (deltaTime * travelSpeed * direction.y);
 	indicator.SetPos(transform.position.ToXmFloat3());
 	proj.SetPos(transform.position.ToXmFloat3());
 }
-DirectX::XMFLOAT3 Camera::GetPos() noexcept
+//DirectX::XMFLOAT3 Camera::GetPos() noexcept
+//{
+//	return transform.position.ToXmFloat3();
+//}
+DirectX::XMFLOAT3 Camera::GetPos() const noexcept
 {
 	return transform.position.ToXmFloat3();
 }
-
 const std::string& Camera::GetName() const noexcept
 {
 	return name;
@@ -140,14 +156,26 @@ void Camera::LinkTechniques(Rgph::RenderGraph& rg)
 	indicator.LinkTechniques(rg);
 	proj.LinkTechniques(rg);
 }
-void Camera::Submit() const
+void Camera::Submit(size_t channelFilter) const
 {
 	if (enableCameraGizmo)
 	{
-		indicator.Submit();
+		indicator.Submit(channelFilter);
 	}
 	if (enableProjectionGizmo)
 	{
-		proj.Submit();
+		proj.Submit(channelFilter);
 	}
+}
+
+void Camera::SetPosition(Vector3 position) noexcept
+{
+	this->transform.position = position;
+	indicator.SetPos(position.ToXmFloat3());
+	proj.SetPos(position.ToXmFloat3());
+}
+
+XMMATRIX Camera::GetProjection() const noexcept
+{
+	return proj.GetMatrix();
 }

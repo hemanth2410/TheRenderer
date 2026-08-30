@@ -1,5 +1,5 @@
 #include "TransformCbuf.h"
-
+#include <sstream>
 namespace Bind
 {
 	TransformCbuf::TransformCbuf(Graphics& gfx, UINT slot)
@@ -34,13 +34,18 @@ namespace Bind
 
 	TransformCbuf::Transforms TransformCbuf::GetTransforms(Graphics& gfx) noexcept
 	{
+		//OutputDebugString(L"Parent is null, something's fucked\n");
 		assert(pParent != nullptr);
 		DirectX::XMVECTOR det;
-		const auto modelView = pParent->GetTransformXM() * gfx.GetCamera();
+		const auto model = pParent->GetTransformXM();
+		const auto modelView = model * gfx.GetCamera();
 		return {
+			DirectX::XMMatrixTranspose(model),
 			DirectX::XMMatrixTranspose(modelView),
-			DirectX::XMMatrixTranspose(modelView * gfx.GetProjection()),
-			DirectX::XMMatrixInverse(&det, modelView)
+			DirectX::XMMatrixTranspose(
+				modelView *
+				gfx.GetProjection()
+			)
 		};
 	}
 
